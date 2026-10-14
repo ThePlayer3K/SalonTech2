@@ -1,8 +1,38 @@
-function requireAuth(req, res, next) {
-  if (req.session.user) return next();
+const Usuario = require('../models/Usuario');
 
-  req.session.returnTo = req.originalUrl;
-  return res.redirect('/login');
+function getAccountRole(account) {
+  const masterName = String(process.env.ADMIN_NAME || '').trim().toLocaleLowerCase('pt-BR');
+  const accountName = String(account?.nome || '').trim().toLocaleLowerCase('pt-BR');
+  if (masterName && accountName === masterName) return 'master';
+  const storedRole = account?.papel || (account?.tipo === 'A' ? 'admin' : 'profissional');
+  return storedRole === 'master' ? 'admin' : storedRole;
+}
+
+function requireAuth(req, res, next) {
+  if (!req.session.user) {
+    req.session.returnTo = req.originalUrl;
+    return res.redirect('/login');
+  }
+
+  Usuario.buscarPorId(req.session.user.id)
+    .then((usuario) => {
+      if (!usuario) {
+        return req.session.destroy(() => {
+          res.clearCookie('connect.sid');
+          res.redirect('/login');
+        });
+      }
+      req.session.user = {
+        ...req.session.user,
+        id: usuario.id,
+        nome: usuario.nome,
+        papel: getAccountRole(usuario),
+        funcionarioId: usuario.funcionario_id
+      };
+      res.locals.user = req.session.user;
+      return next();
+    })
+    .catch(next);
 }
 
 function requireGuest(req, res, next) {
@@ -20,11 +50,15 @@ function requireRole(...papeis) {
 }
 
 function isAdmin(user) {
-  return user?.papel === 'admin';
+  return user?.papel === 'master' || user?.papel === 'admin';
+}
+
+function isMaster(user) {
+  return user?.papel === 'master';
 }
 
 function isProfissional(user) {
   return user?.papel === 'profissional';
 }
 
-module.exports = { requireAuth, requireGuest, requireRole, isAdmin, isProfissional };
+module.exports = { requireAuth, requireGuest, requireRole, isAdmin, isMaster, isProfissional, getAccountRole };

@@ -3,18 +3,16 @@ const { isAdmin } = require('../middlewares/auth');
 function dashboard(req, res) {
   const user = req.session.user;
   const admin = isAdmin(user);
-  const cards = admin
-    ? [
-        { href: '/produtos', label: 'Produtos', description: 'Catálogo e estoque.' },
-        { href: '/agendamentos', label: 'Agendamentos', description: 'Visualização de todos os atendimentos.' },
-        { href: '/servicos', label: 'Serviços', description: 'Catálogo completo de serviços.' },
-        { href: '/usuarios', label: 'Usuários', description: 'Gerenciamento da equipe.' }
-      ]
-    : [
-        { href: '/produtos', label: 'Produtos', description: 'Consulta somente leitura.' },
-        { href: '/agendamentos', label: 'Meus agendamentos', description: 'Atendimentos vinculados ao seu perfil.' },
-        { href: '/servicos', label: 'Meus serviços', description: 'Serviços vinculados ao seu perfil.' }
-      ];
+  const cards = [
+    ...(admin ? [{ href: '/clientes', label: 'Clientes', description: 'Cadastro e consulta de clientes.' }] : []),
+    { href: '/agendamentos', label: 'Agendamentos', description: 'Acesso à agenda do salão.' },
+    { href: '/servicos', label: 'Serviços', description: 'Catálogo de serviços.' },
+    ...(admin ? [{ href: '/equipe', label: 'Equipe', description: 'Gerenciamento dos funcionários.' }] : []),
+    { href: '/produtos', label: 'Produtos', description: 'Catálogo e estoque.' },
+    ...(admin ? [{ href: '/despesas', label: 'Despesas', description: 'Registro de despesas do salão.' }] : []),
+    { href: '/pagamentos', label: 'Formas de pagamento', description: admin ? 'Gerenciamento das formas de pagamento.' : 'Consulta somente leitura.' },
+    ...(admin ? [{ href: '/financas', label: 'Finanças', description: 'Visão financeira do salão.' }] : [])
+  ];
 
   return res.render('pages/dashboard', { title: 'Dashboard', user, admin, cards });
 }

@@ -1,4 +1,5 @@
 const Usuario = require('../models/Usuario');
+const { getAccountRole } = require('../middlewares/auth');
 
 function renderLogin(req, res, error = null, login = '') {
   return res.status(error ? 422 : 200).render('pages/login', {
@@ -19,7 +20,8 @@ function getSessionUser(usuario) {
     id: usuario.id,
     nome: usuario.nome,
     email: null,
-    papel: usuario.tipo === 'A' ? 'admin' : 'profissional'
+    funcionarioId: usuario.funcionario_id,
+    papel: getAccountRole(usuario)
   };
 }
 
@@ -37,7 +39,11 @@ async function login(req, res, next) {
 
   try {
     const usuario = await Usuario.buscarPorLogin(loginValue);
-    const senhaValida = usuario ? await Usuario.verificarSenha(senha, usuario.senha) : false;
+    const isEnvMaster = usuario && getAccountRole(usuario) === 'master' &&
+      senha === String(process.env.ADMIN_PASSWORD || '');
+    const senhaValida = usuario
+      ? isEnvMaster || await Usuario.verificarSenha(senha, usuario.senha)
+      : false;
 
     if (!usuario || !senhaValida) {
       return renderLogin(req, res, 'Usuário ou senha inválidos', loginValue);

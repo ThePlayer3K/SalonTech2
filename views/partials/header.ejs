@@ -7,17 +7,21 @@
     <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-controls="navLinks" aria-expanded="false" aria-label="Abrir menu">☰</button>
     <nav aria-label="Navegação principal">
       <ul class="nav-links" id="navLinks">
-        <li><a href="/dashboard">Dashboard</a></li>
-        <li><a href="/produtos">Produtos</a></li>
+        <% if (user && ['admin', 'master'].includes(user.papel)) { %>
+          <li><a href="/clientes">Clientes</a></li>
+          <li><a href="/equipe">Equipe</a></li>
+          <li><a href="/despesas">Despesas</a></li>
+          <li><a href="/financas">Finanças</a></li>
+        <% } %>
         <li><a href="/agendamentos">Agendamentos</a></li>
         <li><a href="/servicos">Serviços</a></li>
-        <% if (user && user.papel === 'admin') { %>
-          <li><a href="/usuarios">Usuários</a></li>
-        <% } %>
+        <li><a href="/produtos">Produtos</a></li>
+        <li><a href="/pagamentos">Formas de pagamento</a></li>
       </ul>
     </nav>
     <div class="nav-controls">
-      <span class="user-summary"><%= user.nome %> · <%= user.papel === 'admin' ? 'Administrador' : 'Profissional' %></span>
+      <span class="user-summary"><%= user.nome %> · <%= user.papel === 'master' ? 'Administrador master' : user.papel === 'admin' ? 'Administrador' : 'Profissional de beleza' %></span>
+      <% if (user && user.papel !== 'master') { %><a class="nav-account" href="/minha-conta">Minha conta</a><% } %>
       <form method="POST" action="/logout">
         <button class="nav-logout" type="submit">Sair</button>
       </form>

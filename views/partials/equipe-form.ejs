@@ -1,0 +1,25 @@
+<form class="team-form" method="POST" action="<%= action %>">
+  <input type="hidden" name="usuarioId" value="<%= person?.usuario_id || '' %>">
+  <div class="team-form-grid">
+    <div class="field"><label>Nome completo</label><input name="nome" required maxlength="120" value="<%= person?.nome || '' %>" <%= selfOnly ? 'readonly' : '' %>></div>
+    <% if (!selfOnly) { %>
+      <div class="field"><label>CPF</label><input name="cpf" inputmode="numeric" maxlength="14" data-mask="cpf" placeholder="000.000.000-00" value="<%= person?.cpf || '' %>"></div>
+      <div class="field"><label>Telefone</label><input name="telefone" inputmode="tel" maxlength="15" data-mask="phone" placeholder="(00) 00000-0000" value="<%= person?.telefone || '' %>"></div>
+      <div class="field"><label>Especialidade / cargo</label><input name="cargo" maxlength="80" value="<%= person?.cargo || '' %>"></div>
+      <div class="field"><label>Tipo de pagamento</label><input name="tipoPagamento" maxlength="30" value="<%= person?.tipo_pagamento || '' %>"></div>
+      <div class="field"><label>Salário (R$)</label><input name="salario" type="text" inputmode="decimal" placeholder="0,00" data-mask="currency" value="<%= person?.salario ?? '' %>"></div>
+    <% } %>
+    <div class="field"><label>Usuário de acesso</label><input name="login" required maxlength="120" autocomplete="username" value="<%= person?.login || '' %>"></div>
+    <div class="field"><label><%= person ? 'Nova senha (opcional)' : 'Senha inicial' %></label><input name="senha" type="password" minlength="8" autocomplete="new-password" <%= person ? '' : 'required' %>></div>
+    <% if (!selfOnly) { %>
+      <div class="field"><label>Perfil de acesso</label><select name="papel" required <%= person?.papel === 'master' ? 'disabled' : '' %>>
+        <option value="profissional" <%= person?.papel === 'profissional' ? 'selected' : '' %>>Profissional de beleza</option>
+        <option value="admin" <%= person?.papel === 'admin' ? 'selected' : '' %>>Administrador</option>
+      </select></div>
+    <% } else { %>
+      <input type="hidden" name="papel" value="<%= person?.papel || '' %>">
+      <div class="field"><label>Perfil de acesso</label><input value="<%= person?.papel === 'admin' ? 'Administrador' : 'Profissional de beleza' %>" disabled></div>
+    <% } %>
+  </div>
+  <button class="btn btn-primary" type="submit"><%= person ? 'Salvar alterações' : 'Criar funcionário e usuário' %></button>
+</form>

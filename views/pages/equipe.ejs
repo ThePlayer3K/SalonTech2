@@ -1,0 +1,49 @@
+<%- include('../partials/head', { title }) %>
+<%- include('../partials/header', { user }) %>
+<main id="conteudo">
+  <section class="container team-section">
+    <span class="section-kicker"><%= selfOnly ? 'Acesso pessoal' : 'Funcionários e contas' %></span>
+    <h1><%= selfOnly ? 'Minha conta' : 'Equipe e usuários' %></h1>
+    <p class="team-intro">Cada funcionário possui uma conta vinculada. O login pode ser consultado; senhas são armazenadas protegidas e só podem ser redefinidas.</p>
+    <% if (error) { %><p class="team-notice team-error"><%= error %></p><% } %>
+    <% if (success) { %><p class="team-notice"><%= success %></p><% } %>
+
+    <% if (!selfOnly) { %>
+      <details class="team-create" open>
+        <summary>Adicionar funcionário</summary>
+        <%- include('../partials/equipe-form', { person: null, action: '/equipe', selfOnly: false }) %>
+      </details>
+    <% } %>
+
+    <div class="team-list">
+      <% people.forEach((person) => { %>
+        <article class="team-card">
+          <div class="team-card-heading">
+            <div><h2><%= person.nome %></h2><p>Usuário: <strong><%= person.login %></strong></p></div>
+            <span class="role-badge <%= person.papel === 'profissional' ? 'role-profissional' : 'role-admin' %>"><%= person.papel === 'master' ? 'Administrador master' : person.papel === 'admin' ? 'Administrador' : 'Profissional de beleza' %></span>
+          </div>
+          <% if (person.papel === 'master') { %>
+            <p class="team-locked">Conta protegida pelo ambiente. Não é possível alterar credenciais ou excluir este usuário.</p>
+          <% } else { %>
+            <% const canEdit = selfOnly || user.papel === 'master' || (user.papel === 'admin' && (person.papel !== 'admin' || Number(person.usuario_id) === Number(user.id))); %>
+            <% if (canEdit) { %>
+              <details class="team-edit" <%= selfOnly ? 'open' : '' %>>
+                <summary><%= selfOnly ? 'Editar meus dados e credenciais' : 'Editar funcionário e credenciais' %></summary>
+                <%- include('../partials/equipe-form', { person, action: selfOnly ? '/minha-conta' : `/equipe/${person.usuario_id}`, selfOnly }) %>
+              </details>
+            <% } else { %>
+              <p class="team-locked">Somente o Administrador master pode gerenciar outras contas de Administrador.</p>
+            <% } %>
+            <% if (!selfOnly && (user.papel === 'master' || (user.papel === 'admin' && person.papel !== 'admin'))) { %>
+              <form method="POST" action="/equipe/<%= person.usuario_id %>/excluir" onsubmit="return confirm('Excluir funcionário e usuário?')">
+                <button class="mini-btn danger" type="submit">Excluir funcionário e usuário</button>
+              </form>
+            <% } %>
+          <% } %>
+        </article>
+      <% }) %>
+      <% if (!people.length) { %><p class="empty-state">Nenhum funcionário cadastrado.</p><% } %>
+    </div>
+  </section>
+</main>
+<%- include('../partials/footer') %>
