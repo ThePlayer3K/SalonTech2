@@ -1,0 +1,26 @@
+<header class="app-header">
+  <div class="container navbar">
+    <a class="brand" href="/dashboard" aria-label="Página inicial do SalonTech">
+      <img src="/img/favicon.jpeg" alt="Logo SalonTech" class="brand-logo">
+      <span>Salon<span class="gradient-text">Tech</span></span>
+    </a>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-controls="navLinks" aria-expanded="false" aria-label="Abrir menu">☰</button>
+    <nav aria-label="Navegação principal">
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/produtos">Produtos</a></li>
+        <li><a href="/agendamentos">Agendamentos</a></li>
+        <li><a href="/servicos">Serviços</a></li>
+        <% if (user && user.papel === 'admin') { %>
+          <li><a href="/usuarios">Usuários</a></li>
+        <% } %>
+      </ul>
+    </nav>
+    <div class="nav-controls">
+      <span class="user-summary"><%= user.nome %> · <%= user.papel === 'admin' ? 'Administrador' : 'Profissional' %></span>
+      <form method="POST" action="/logout">
+        <button class="nav-logout" type="submit">Sair</button>
+      </form>
+    </div>
+  </div>
+</header>
