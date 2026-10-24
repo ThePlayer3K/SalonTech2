@@ -1,0 +1,43 @@
+<%- include('../partials/head', { title }) %>
+<%- include('../partials/header', { user }) %>
+<main id="conteudo">
+  <section class="container team-section">
+    <span class="section-kicker">Cadastros do salão</span>
+    <h1><%= title %></h1>
+    <p class="team-intro"><%= description %></p>
+    <% if (!canManage) { %><p class="team-notice">Seu acesso permite apenas a consulta destes dados.</p><% } %>
+    <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
+    <% if (success) { %><p class="team-notice" role="status"><%= success %></p><% } %>
+    <% if (canManage) { %>
+      <details class="team-create" open>
+        <summary>Adicionar <%= singular %></summary>
+        <%- include('../partials/catalogo-form', { record: editingId ? {} : formData, action: basePath, prefix: 'novo' }) %>
+      </details>
+    <% } %>
+    <div class="team-list">
+      <% records.forEach((record) => { %>
+        <article class="team-card catalog-card">
+          <h2><%= record.nome %></h2>
+          <% if (fields.length > 1) { %>
+            <dl class="catalog-details">
+              <% fields.filter((field) => field.name !== 'nome').forEach((field) => { %>
+                <div><dt><%= field.label %></dt><dd><%= record[field.name] ?? 'Não informado' %></dd></div>
+              <% }) %>
+            </dl>
+          <% } %>
+          <% if (canManage) { %>
+            <details class="team-edit" <%= editingId === record.id ? 'open' : '' %>>
+              <summary>Editar <%= singular %></summary>
+              <%- include('../partials/catalogo-form', { record: editingId === record.id ? formData : record, action: `${basePath}/${record.id}`, prefix: `registro-${record.id}` }) %>
+            </details>
+            <form method="POST" action="<%= basePath %>/<%= record.id %>/excluir" onsubmit="return confirm('Excluir este cadastro? Esta ação não pode ser desfeita.')">
+              <button class="mini-btn danger" type="submit" aria-label="Excluir <%= singular %>: <%= record.nome %>">Excluir <%= singular %></button>
+            </form>
+          <% } %>
+        </article>
+      <% }) %>
+      <% if (!records.length) { %><p class="empty-state">Nenhum registro cadastrado.</p><% } %>
+    </div>
+  </section>
+</main>
+<%- include('../partials/footer') %>

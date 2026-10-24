@@ -6,6 +6,9 @@ const session = require('./config/session');
 
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const clienteRoutes = require('./routes/clienteRoutes');
+const produtoRoutes = require('./routes/produtoRoutes');
+const formaPagamentoRoutes = require('./routes/formaPagamentoRoutes');
 const placeholderRoutes = require('./routes/placeholderRoutes');
 
 const app = express();
@@ -32,6 +35,9 @@ app.get('/', (req, res) => {
 
 app.use('/', authRoutes);
 app.use('/', dashboardRoutes);
+app.use('/clientes', clienteRoutes);
+app.use('/produtos', produtoRoutes);
+app.use('/pagamentos', formaPagamentoRoutes);
 app.use('/', placeholderRoutes);
 
 app.use((req, res) => {

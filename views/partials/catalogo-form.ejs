@@ -1,0 +1,14 @@
+<form class="team-form catalog-form" method="POST" action="<%= action %>">
+  <div class="team-form-grid">
+    <% fields.forEach((field) => { %>
+      <div class="field">
+        <label for="<%= prefix %>-<%= field.name %>"><%= field.label %></label>
+        <input id="<%= prefix %>-<%= field.name %>" name="<%= field.name %>" type="<%= field.type %>" required
+          <% if (field.maxLength) { %>maxlength="<%= field.maxLength %>"<% } %>
+          <% if (field.type === 'number') { %>min="<%= field.min %>" max="<%= field.max %>" step="<%= field.step %>"<% } %>
+          value="<%= record[field.name] ?? '' %>">
+      </div>
+    <% }) %>
+  </div>
+  <button class="btn btn-primary" type="submit"><%= action === basePath ? 'Cadastrar ' + singular : 'Salvar alterações' %></button>
+</form>

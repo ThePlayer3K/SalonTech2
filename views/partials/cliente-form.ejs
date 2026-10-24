@@ -1,0 +1,9 @@
+<form class="team-form client-form" method="POST" action="<%= action %>">
+  <div class="team-form-grid">
+    <div class="field"><label for="<%= prefix %>-nome">Nome completo *</label><input id="<%= prefix %>-nome" name="nome" required maxlength="120" autocomplete="name" value="<%= cliente.nome || '' %>"></div>
+    <div class="field"><label for="<%= prefix %>-cpf">CPF</label><input id="<%= prefix %>-cpf" name="cpf" inputmode="numeric" maxlength="14" data-mask="cpf" placeholder="000.000.000-00" value="<%= cliente.cpf || '' %>"></div>
+    <div class="field"><label for="<%= prefix %>-telefone">Telefone</label><input id="<%= prefix %>-telefone" name="telefone" type="tel" maxlength="15" autocomplete="tel-national" data-mask="phone" placeholder="(00) 00000-0000" value="<%= cliente.telefone || '' %>"></div>
+    <div class="field"><label for="<%= prefix %>-email">E-mail</label><input id="<%= prefix %>-email" name="email" type="email" maxlength="255" autocomplete="email" value="<%= cliente.email || '' %>"></div>
+  </div>
+  <button class="btn btn-primary" type="submit"><%= action === '/clientes' ? 'Cadastrar cliente' : 'Salvar alterações' %></button>
+</form>

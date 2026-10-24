@@ -4,13 +4,10 @@ const { requireAuth, requireRole } = require('../middlewares/auth');
 
 const router = express.Router();
 
-router.get('/clientes', requireAuth, requireRole('admin', 'master'), placeholder);
 router.get('/agendamentos', requireAuth, placeholder);
 router.get('/servicos', requireAuth, placeholder);
 router.get('/equipe', requireAuth, requireRole('admin', 'master'), require('../controllers/equipeController').index);
-router.get('/produtos', requireAuth, placeholder);
 router.get('/despesas', requireAuth, requireRole('admin', 'master'), placeholder);
-router.get('/pagamentos', requireAuth, placeholder);
 router.get('/financas', requireAuth, requireRole('admin', 'master'), placeholder);
 router.post('/equipe', requireAuth, requireRole('admin', 'master'), require('../controllers/equipeController').create);
 router.post('/equipe/:usuarioId', requireAuth, requireRole('admin', 'master'), require('../controllers/equipeController').update);

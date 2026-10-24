@@ -10,7 +10,7 @@ function dashboard(req, res) {
     ...(admin ? [{ href: '/equipe', label: 'Equipe', description: 'Gerenciamento dos funcionários.' }] : []),
     { href: '/produtos', label: 'Produtos', description: 'Catálogo e estoque.' },
     ...(admin ? [{ href: '/despesas', label: 'Despesas', description: 'Registro de despesas do salão.' }] : []),
-    { href: '/pagamentos', label: 'Formas de pagamento', description: admin ? 'Gerenciamento das formas de pagamento.' : 'Consulta somente leitura.' },
+    { href: '/pagamentos', label: 'Formas de pagamento', description: admin ? 'Gerenciamento de pagamentos.' : 'Consulta somente leitura.' },
     ...(admin ? [{ href: '/financas', label: 'Finanças', description: 'Visão financeira do salão.' }] : [])
   ];
 

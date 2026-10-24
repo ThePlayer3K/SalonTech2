@@ -1,0 +1,36 @@
+<%- include('../partials/head', { title }) %>
+<%- include('../partials/header', { user }) %>
+<main id="conteudo">
+  <section class="container team-section">
+    <span class="section-kicker">Cadastro e atendimento</span>
+    <h1>Clientes</h1>
+    <p class="team-intro">Cadastre e atualize os dados dos clientes do salão. O nome é obrigatório; os demais dados são opcionais.</p>
+    <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
+    <% if (success) { %><p class="team-notice" role="status"><%= success %></p><% } %>
+    <details class="team-create" open>
+      <summary>Adicionar cliente</summary>
+      <%- include('../partials/cliente-form', { cliente: editingId ? {} : formData, action: '/clientes', prefix: 'novo-cliente' }) %>
+    </details>
+    <div class="team-list">
+      <% clientes.forEach((cliente) => { %>
+        <article class="team-card client-card">
+          <h2><%= cliente.nome %></h2>
+          <dl class="client-details">
+            <div><dt>CPF</dt><dd><%= cliente.cpf || 'Não informado' %></dd></div>
+            <div><dt>Telefone</dt><dd><%= cliente.telefone || 'Não informado' %></dd></div>
+            <div><dt>E-mail</dt><dd><%= cliente.email || 'Não informado' %></dd></div>
+          </dl>
+          <details class="team-edit" <%= editingId === cliente.id ? 'open' : '' %>>
+            <summary>Editar cliente</summary>
+            <%- include('../partials/cliente-form', { cliente: editingId === cliente.id ? formData : cliente, action: `/clientes/${cliente.id}`, prefix: `cliente-${cliente.id}` }) %>
+          </details>
+          <form method="POST" action="/clientes/<%= cliente.id %>/excluir" onsubmit="return confirm('Excluir este cliente? Esta ação não pode ser desfeita.')">
+            <button class="mini-btn danger" type="submit" aria-label="Excluir cliente <%= cliente.nome %>">Excluir cliente</button>
+          </form>
+        </article>
+      <% }) %>
+      <% if (!clientes.length) { %><p class="empty-state">Nenhum cliente cadastrado.</p><% } %>
+    </div>
+  </section>
+</main>
+<%- include('../partials/footer') %>

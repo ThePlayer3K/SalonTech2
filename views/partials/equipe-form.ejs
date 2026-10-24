@@ -1,4 +1,4 @@
-<form class="team-form" method="POST" action="<%= action %>">
+<form class="team-form<%= selfOnly ? ' account-form' : '' %>" method="POST" action="<%= action %>">
   <input type="hidden" name="usuarioId" value="<%= person?.usuario_id || '' %>">
   <div class="team-form-grid">
     <div class="field"><label>Nome completo</label><input name="nome" required maxlength="120" value="<%= person?.nome || '' %>" <%= selfOnly ? 'readonly' : '' %>></div>
