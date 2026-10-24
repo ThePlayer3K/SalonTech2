@@ -1,0 +1,19 @@
+<form class="team-form catalog-form" method="POST" action="<%= action %>">
+  <div class="team-form-grid">
+    <div class="field"><label for="<%= prefix %>-nome">Nome</label><input id="<%= prefix %>-nome" name="nome" required maxlength="120" value="<%= servico.nome || '' %>"></div>
+    <div class="field">
+      <label for="<%= prefix %>-funcionario">Funcionário responsável</label>
+      <select id="<%= prefix %>-funcionario" name="funcionario_id" required>
+        <option value="">Selecione o responsável</option>
+        <% funcionarios.forEach((funcionario) => { %>
+          <option value="<%= funcionario.id %>" <%= String(servico.funcionario_id) === String(funcionario.id) ? 'selected' : '' %>><%= funcionario.nome %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field"><label for="<%= prefix %>-categoria">Categoria</label><input id="<%= prefix %>-categoria" name="categoria" required maxlength="80" value="<%= servico.categoria || '' %>"></div>
+    <div class="field"><label for="<%= prefix %>-valor">Valor (R$)</label><input id="<%= prefix %>-valor" name="valor" inputmode="decimal" required maxlength="15" placeholder="0,00" value="<%= servico.valor ?? '' %>"></div>
+    <div class="field"><label for="<%= prefix %>-comissao">Comissão do profissional (%)</label><input id="<%= prefix %>-comissao" name="percentual_comissao" inputmode="decimal" required maxlength="6" placeholder="0 a 100" value="<%= servico.percentual_comissao ?? '' %>"></div>
+    <div class="field"><label for="<%= prefix %>-duracao">Duração (minutos)</label><input id="<%= prefix %>-duracao" name="duracao" type="number" required min="1" max="2147483647" step="1" value="<%= servico.duracao ?? '' %>"></div>
+  </div>
+  <button class="btn btn-primary" type="submit" <%= !funcionarios.length ? 'disabled' : '' %>><%= action === '/servicos' ? 'Cadastrar serviço' : 'Salvar alterações' %></button>
+</form>

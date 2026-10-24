@@ -1,0 +1,43 @@
+<%- include('../partials/head', { title }) %>
+<%- include('../partials/header', { user }) %>
+<main id="conteudo">
+  <section class="container team-section">
+    <span class="section-kicker">Catálogo do salão</span>
+    <h1>Serviços</h1>
+    <p class="team-intro"><%= canManage ? 'Cadastre e gerencie os serviços de todos os funcionários. Todos os campos são obrigatórios.' : 'Consulte os serviços sob sua responsabilidade. Seu acesso é somente leitura.' %></p>
+    <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
+    <% if (success) { %><p class="team-notice" role="status"><%= success %></p><% } %>
+    <% if (canManage) { %>
+      <% if (!funcionarios.length) { %><p class="team-notice">Cadastre um funcionário na <a href="/equipe">Equipe</a> para vinculá-lo a um serviço.</p><% } %>
+      <details class="team-create" open>
+        <summary>Adicionar serviço</summary>
+        <%- include('../partials/servico-form', { servico: editingId ? {} : formData, action: '/servicos', prefix: 'novo-servico' }) %>
+      </details>
+    <% } %>
+    <div class="team-list">
+      <% servicos.forEach((servico) => { %>
+        <article class="team-card catalog-card">
+          <h2><%= servico.nome %></h2>
+          <dl class="catalog-details">
+            <div><dt>Funcionário responsável</dt><dd><%= servico.funcionario_nome %></dd></div>
+            <div><dt>Categoria</dt><dd><%= servico.categoria %></dd></div>
+            <div><dt>Valor</dt><dd><%= Number(servico.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></dd></div>
+            <div><dt>Comissão do profissional</dt><dd><%= Number(servico.percentual_comissao).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) %>%</dd></div>
+            <div><dt>Duração</dt><dd><%= servico.duracao %> minutos</dd></div>
+          </dl>
+          <% if (canManage) { %>
+            <details class="team-edit" <%= editingId === servico.id ? 'open' : '' %>>
+              <summary>Editar serviço</summary>
+              <%- include('../partials/servico-form', { servico: editingId === servico.id ? formData : servico, action: `/servicos/${servico.id}`, prefix: `servico-${servico.id}` }) %>
+            </details>
+            <form method="POST" action="/servicos/<%= servico.id %>/excluir" onsubmit="return confirm('Excluir este serviço? Esta ação não pode ser desfeita.')">
+              <button class="mini-btn danger" type="submit" aria-label="Excluir serviço: <%= servico.nome %>">Excluir serviço</button>
+            </form>
+          <% } %>
+        </article>
+      <% }) %>
+      <% if (!servicos.length) { %><p class="empty-state"><%= canManage ? 'Nenhum serviço cadastrado.' : 'Nenhum serviço vinculado ao seu funcionário.' %></p><% } %>
+    </div>
+  </section>
+</main>
+<%- include('../partials/footer') %>
