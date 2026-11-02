@@ -1,4 +1,12 @@
-<form class="team-form catalog-form" method="POST" action="<%= action %>">
+<%
+  const dadosDoServico = (servico) => contratado && String(contratado.servico_id) === String(servico.id)
+    ? { funcionario_nome: contratado.funcionario_nome, duracao: contratado.duracao, valor: contratado.valor_total }
+    : servico;
+  const servicoSelecionado = servicos.find((servico) => String(servico.id) === String(agendamento.servico_id));
+  const dadosSelecionados = contratado && String(contratado.servico_id) === String(agendamento.servico_id)
+    ? dadosDoServico({ id: contratado.servico_id }) : servicoSelecionado;
+%>
+<form class="team-form catalog-form" method="POST" action="<%= action %>" data-agendamento-form>
   <% if (action === '/agendamentos') { %><input type="hidden" name="cadastro_token" value="<%= cadastroToken %>"><% } %>
   <div class="team-form-grid">
     <div class="field">
@@ -11,16 +19,25 @@
       </select>
     </div>
     <div class="field">
-      <label for="<%= prefix %>-servico">Serviço e profissional</label>
+      <label for="<%= prefix %>-servico">Serviço</label>
       <select id="<%= prefix %>-servico" name="servico_id" required>
         <option value="">Selecione o serviço</option>
-        <% if (agendamento.servico_nome && !servicos.some((servico) => String(servico.id) === String(agendamento.servico_id))) { %>
-          <option value="<%= agendamento.servico_id %>" selected><%= agendamento.servico_nome %> · <%= agendamento.funcionario_nome %> (serviço contratado)</option>
+        <% if (contratado && String(contratado.servico_id) === String(agendamento.servico_id) && !servicoSelecionado) { %>
+          <option value="<%= contratado.servico_id %>" data-valor="<%= dadosSelecionados.valor %>" data-profissional="<%= dadosSelecionados.funcionario_nome %>" data-duracao="<%= dadosSelecionados.duracao %>" selected><%= contratado.servico_nome %></option>
         <% } %>
         <% servicos.forEach((servico) => { %>
-          <option value="<%= servico.id %>" <%= String(agendamento.servico_id) === String(servico.id) ? 'selected' : '' %>><%= servico.nome %> · <%= servico.funcionario_nome %> · <%= servico.duracao %> min · <%= Number(servico.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></option>
+          <% const dados = dadosDoServico(servico); %>
+          <option value="<%= servico.id %>" data-valor="<%= dados.valor %>" data-profissional="<%= dados.funcionario_nome %>" data-duracao="<%= dados.duracao ?? '' %>" <%= String(agendamento.servico_id) === String(servico.id) ? 'selected' : '' %>><%= servico.nome %></option>
         <% }) %>
       </select>
+    </div>
+    <div class="field">
+      <label for="<%= prefix %>-profissional">Profissional</label>
+      <input id="<%= prefix %>-profissional" type="text" readonly data-profissional-servico placeholder="Selecione o serviço" value="<%= dadosSelecionados?.funcionario_nome || '' %>">
+    </div>
+    <div class="field">
+      <label for="<%= prefix %>-duracao">Duração (minutos)</label>
+      <input id="<%= prefix %>-duracao" type="text" readonly data-duracao-servico placeholder="Selecione o serviço" value="<%= dadosSelecionados?.duracao ?? '' %>">
     </div>
     <div class="field"><label for="<%= prefix %>-data">Data e hora</label><input id="<%= prefix %>-data" name="data_hora" type="datetime-local" required min="0001-01-01T00:00" max="9999-12-31T23:59" step="60" value="<%= agendamento.data_hora || '' %>"></div>
     <div class="field">
@@ -39,6 +56,10 @@
           <option value="<%= value %>" <%= (agendamento.situacao || 'agendado') === value ? 'selected' : '' %>><%= label %></option>
         <% }) %>
       </select>
+    </div>
+    <div class="field">
+      <label for="<%= prefix %>-valor">Valor</label>
+      <input id="<%= prefix %>-valor" type="text" readonly data-valor-servico placeholder="Selecione o serviço" value="<%= dadosSelecionados?.valor == null ? '' : Number(dadosSelecionados.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %>">
     </div>
   </div>
   <button class="btn btn-primary" type="submit" <%= !clientes.length || !pagamentos.length || (!servicos.length && !agendamento.servico_id) ? 'disabled' : '' %>><%= action === '/agendamentos' ? 'Cadastrar agendamento' : 'Salvar alterações' %></button>

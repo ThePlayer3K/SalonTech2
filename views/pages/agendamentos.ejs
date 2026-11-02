@@ -15,7 +15,7 @@
       <% } %>
       <details class="team-create" open>
         <summary>Adicionar agendamento</summary>
-        <%- include('../partials/agendamento-form', { agendamento: editingId ? {} : formData, action: '/agendamentos', prefix: 'novo-agendamento' }) %>
+        <%- include('../partials/agendamento-form', { agendamento: editingId ? {} : formData, contratado: null, action: '/agendamentos', prefix: 'novo-agendamento' }) %>
       </details>
     <% } %>
     <div class="team-list">
@@ -34,7 +34,7 @@
           <% if (canManage) { %>
             <details class="team-edit" <%= editingId === agendamento.id ? 'open' : '' %>>
               <summary>Editar agendamento</summary>
-              <%- include('../partials/agendamento-form', { agendamento: editingId === agendamento.id ? { ...agendamento, ...formData } : agendamento, action: `/agendamentos/${agendamento.id}`, prefix: `agendamento-${agendamento.id}` }) %>
+              <%- include('../partials/agendamento-form', { agendamento: editingId === agendamento.id ? { ...agendamento, ...formData } : agendamento, contratado: agendamento, action: `/agendamentos/${agendamento.id}`, prefix: `agendamento-${agendamento.id}` }) %>
             </details>
           <% } %>
         </article>
@@ -43,4 +43,5 @@
     </div>
   </section>
 </main>
+<script src="/js/agendamento-form.js" defer></script>
 <%- include('../partials/footer') %>
