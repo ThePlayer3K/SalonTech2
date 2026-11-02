@@ -35,6 +35,9 @@
             <div><dt>Tipo</dt><dd><%= despesa.tipo === 'fixo' ? 'Fixo' : 'Variável' %></dd></div>
             <div><dt>Data</dt><dd><% if (despesa.data) { %><time datetime="<%= despesa.data %>"><%= despesa.data.split('-').reverse().join('/') %></time><% } else { %>Não informada<% } %></dd></div>
           </dl>
+          <% if (despesa.agendamento_id) { %>
+            <p class="team-locked">Comissão automática do agendamento #<%= despesa.agendamento_id %>. Para alterá-la, <a href="/agendamentos#agendamento-<%= despesa.agendamento_id %>">edite o agendamento</a>.</p>
+          <% } else { %>
           <details class="team-edit" <%= editingId === despesa.id ? 'open' : '' %>>
             <summary>Editar despesa</summary>
             <%- include('../partials/despesa-form', { despesa: editingId === despesa.id ? formData : despesa, action: `/despesas/${despesa.id}`, prefix: `despesa-${despesa.id}` }) %>
@@ -42,6 +45,7 @@
           <form method="POST" action="/despesas/<%= despesa.id %>/excluir" onsubmit="return confirm('Excluir esta despesa? Esta ação não pode ser desfeita.')">
             <button class="mini-btn danger" type="submit" aria-label="Excluir despesa: <%= despesa.descricao %>">Excluir despesa</button>
           </form>
+          <% } %>
         </article>
       <% }) %>
       <% if (!despesas.length && !invalidFilters) { %><p class="empty-state"><%= filters.nome || filters.dataInicio || filters.dataFim ? 'Nenhuma despesa encontrada para os filtros informados.' : 'Nenhuma despesa cadastrada.' %></p><% } %>

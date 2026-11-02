@@ -1,4 +1,5 @@
 <form class="team-form catalog-form despesa-form" method="POST" action="<%= action %>">
+  <% if (action === '/despesas') { %><input type="hidden" name="cadastro_token" value="<%= cadastroToken %>"><% } %>
   <div class="team-form-grid">
     <div class="field"><label for="<%= prefix %>-descricao">Descrição</label><input id="<%= prefix %>-descricao" name="descricao" required maxlength="120" value="<%= despesa.descricao || '' %>"></div>
     <div class="field"><label for="<%= prefix %>-valor">Valor (R$)</label><input id="<%= prefix %>-valor" name="valor" inputmode="decimal" required maxlength="15" placeholder="0,00" value="<%= despesa.valor ?? '' %>"></div>

@@ -1,0 +1,45 @@
+<form class="team-form catalog-form" method="POST" action="<%= action %>">
+  <% if (action === '/agendamentos') { %><input type="hidden" name="cadastro_token" value="<%= cadastroToken %>"><% } %>
+  <div class="team-form-grid">
+    <div class="field">
+      <label for="<%= prefix %>-cliente">Cliente</label>
+      <select id="<%= prefix %>-cliente" name="cliente_id" required>
+        <option value="">Selecione o cliente</option>
+        <% clientes.forEach((cliente) => { %>
+          <option value="<%= cliente.id %>" <%= String(agendamento.cliente_id) === String(cliente.id) ? 'selected' : '' %>><%= cliente.nome %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label for="<%= prefix %>-servico">Serviço e profissional</label>
+      <select id="<%= prefix %>-servico" name="servico_id" required>
+        <option value="">Selecione o serviço</option>
+        <% if (agendamento.servico_nome && !servicos.some((servico) => String(servico.id) === String(agendamento.servico_id))) { %>
+          <option value="<%= agendamento.servico_id %>" selected><%= agendamento.servico_nome %> · <%= agendamento.funcionario_nome %> (serviço contratado)</option>
+        <% } %>
+        <% servicos.forEach((servico) => { %>
+          <option value="<%= servico.id %>" <%= String(agendamento.servico_id) === String(servico.id) ? 'selected' : '' %>><%= servico.nome %> · <%= servico.funcionario_nome %> · <%= servico.duracao %> min · <%= Number(servico.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field"><label for="<%= prefix %>-data">Data e hora</label><input id="<%= prefix %>-data" name="data_hora" type="datetime-local" required min="0001-01-01T00:00" max="9999-12-31T23:59" step="60" value="<%= agendamento.data_hora || '' %>"></div>
+    <div class="field">
+      <label for="<%= prefix %>-pagamento">Forma de pagamento</label>
+      <select id="<%= prefix %>-pagamento" name="forma_pag_id" required>
+        <option value="">Selecione a forma de pagamento</option>
+        <% pagamentos.forEach((pagamento) => { %>
+          <option value="<%= pagamento.id %>" <%= String(agendamento.forma_pag_id) === String(pagamento.id) ? 'selected' : '' %>><%= pagamento.nome %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label for="<%= prefix %>-situacao">Situação</label>
+      <select id="<%= prefix %>-situacao" name="situacao" required>
+        <% Object.entries(situacoes).forEach(([value, label]) => { %>
+          <option value="<%= value %>" <%= (agendamento.situacao || 'agendado') === value ? 'selected' : '' %>><%= label %></option>
+        <% }) %>
+      </select>
+    </div>
+  </div>
+  <button class="btn btn-primary" type="submit" <%= !clientes.length || !pagamentos.length || (!servicos.length && !agendamento.servico_id) ? 'disabled' : '' %>><%= action === '/agendamentos' ? 'Cadastrar agendamento' : 'Salvar alterações' %></button>
+</form>

@@ -3,6 +3,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { Client } = require('pg');
+const { applyMigrations } = require('./apply-migrations');
 
 async function main() {
   const client = new Client({
@@ -12,9 +13,15 @@ async function main() {
 
   await client.connect();
   try {
+    await client.query('BEGIN');
     const schema = fs.readFileSync(path.join(__dirname, '..', 'schema.sql'), 'utf8');
     await client.query(schema);
+    await applyMigrations(client);
+    await client.query('COMMIT');
     console.log('Schema PostgreSQL aplicado com sucesso.');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
   } finally {
     await client.end();
   }

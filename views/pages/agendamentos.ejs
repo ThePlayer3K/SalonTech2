@@ -1,0 +1,46 @@
+<%- include('../partials/head', { title }) %>
+<%- include('../partials/header', { user }) %>
+<% const formatDateTime = (value) => { const [date, time] = value.split('T'); return `${date.split('-').reverse().join('/')} às ${time}`; }; %>
+<main id="conteudo">
+  <section class="container team-section">
+    <span class="section-kicker">Agenda do salão</span>
+    <h1>Agendamentos</h1>
+    <p class="team-intro"><%= ['admin', 'master'].includes(user.papel) ? 'Cadastre e acompanhe os atendimentos do salão.' : 'Cadastre e acompanhe os seus atendimentos.' %> Para liberar um horário, altere a situação para Cancelado. Agendamentos não podem ser excluídos.</p>
+    <p class="team-notice">A situação Pago gera a comissão do profissional automaticamente. Ao mudar para qualquer outra situação, a comissão é removida.</p>
+    <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
+    <% if (success) { %><p class="team-notice" role="status"><%= success %></p><% } %>
+    <% if (canManage) { %>
+      <% if (!clientes.length || !servicos.length || !pagamentos.length) { %>
+        <p class="team-notice">Para cadastrar um agendamento, é necessário ter cliente, serviço com profissional e forma de pagamento cadastrados.</p>
+      <% } %>
+      <details class="team-create" open>
+        <summary>Adicionar agendamento</summary>
+        <%- include('../partials/agendamento-form', { agendamento: editingId ? {} : formData, action: '/agendamentos', prefix: 'novo-agendamento' }) %>
+      </details>
+    <% } %>
+    <div class="team-list">
+      <% agendamentos.forEach((agendamento) => { %>
+        <article class="team-card catalog-card" id="agendamento-<%= agendamento.id %>">
+          <h2><%= agendamento.cliente_nome %> · <%= agendamento.servico_nome %></h2>
+          <dl class="catalog-details">
+            <div><dt>Profissional</dt><dd><%= agendamento.funcionario_nome %></dd></div>
+            <div><dt>Data e hora</dt><dd><time datetime="<%= agendamento.data_hora %>"><%= formatDateTime(agendamento.data_hora) %></time></dd></div>
+            <div><dt>Término previsto</dt><dd><%= formatDateTime(agendamento.fim) %> (<%= agendamento.duracao %> min)</dd></div>
+            <div><dt>Forma de pagamento</dt><dd><%= agendamento.pagamento_nome %></dd></div>
+            <div><dt>Situação</dt><dd><%= situacoes[agendamento.situacao] %></dd></div>
+            <div><dt>Valor contratado</dt><dd><%= Number(agendamento.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></dd></div>
+            <div><dt>Comissão</dt><dd><%= Number(agendamento.percentual_comissao).toLocaleString('pt-BR') %>%</dd></div>
+          </dl>
+          <% if (canManage) { %>
+            <details class="team-edit" <%= editingId === agendamento.id ? 'open' : '' %>>
+              <summary>Editar agendamento</summary>
+              <%- include('../partials/agendamento-form', { agendamento: editingId === agendamento.id ? { ...agendamento, ...formData } : agendamento, action: `/agendamentos/${agendamento.id}`, prefix: `agendamento-${agendamento.id}` }) %>
+            </details>
+          <% } %>
+        </article>
+      <% }) %>
+      <% if (!agendamentos.length) { %><p class="empty-state">Nenhum agendamento encontrado.</p><% } %>
+    </div>
+  </section>
+</main>
+<%- include('../partials/footer') %>

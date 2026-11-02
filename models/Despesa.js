@@ -17,7 +17,7 @@ async function listar({ nome = '', dataInicio = '', dataFim = '' } = {}) {
     conditions.push(`data <= $${params.length}::date`);
   }
   const result = await query(
-    `SELECT id, nome AS descricao, valor, tipo, to_char(data, 'YYYY-MM-DD') AS data
+    `SELECT id, nome AS descricao, valor, tipo, agendamento_id, to_char(data, 'YYYY-MM-DD') AS data
        FROM public.despesa
        ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
       ORDER BY data DESC NULLS LAST, id DESC`,
@@ -26,10 +26,11 @@ async function listar({ nome = '', dataInicio = '', dataFim = '' } = {}) {
   return result.rows;
 }
 
-async function criar({ descricao, valor, tipo, data }) {
+async function criar({ descricao, valor, tipo, data }, cadastroToken) {
   const result = await query(
-    'INSERT INTO public.despesa (nome, valor, tipo, data) VALUES ($1, $2, $3, $4) RETURNING id',
-    [descricao, valor, tipo, data]
+    `INSERT INTO public.despesa (nome, valor, tipo, data, cadastro_token) VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (cadastro_token) DO UPDATE SET cadastro_token = EXCLUDED.cadastro_token RETURNING id`,
+    [descricao, valor, tipo, data, cadastroToken]
   );
   return result.rows[0];
 }

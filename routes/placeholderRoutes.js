@@ -4,7 +4,6 @@ const { requireAuth, requireRole } = require('../middlewares/auth');
 
 const router = express.Router();
 
-router.get('/agendamentos', requireAuth, placeholder);
 router.get('/equipe', requireAuth, requireRole('admin', 'master'), require('../controllers/equipeController').index);
 router.get('/financas', requireAuth, requireRole('admin', 'master'), placeholder);
 router.post('/equipe', requireAuth, requireRole('admin', 'master'), require('../controllers/equipeController').create);

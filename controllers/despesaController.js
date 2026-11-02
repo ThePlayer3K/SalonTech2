@@ -1,20 +1,6 @@
 const Despesa = require('../models/Despesa');
 const { requiredText, ValidationError } = require('./catalogoController');
-
-function validId(value) {
-  return /^[1-9]\d*$/.test(String(value)) && Number.isSafeInteger(Number(value)) && Number(value) <= 2147483647;
-}
-
-function parseDate(value, label) {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value.startsWith('0000')) {
-    throw new ValidationError(`Informe ${label} válida.`);
-  }
-  const date = new Date(`${value}T00:00:00.000Z`);
-  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
-    throw new ValidationError(`Informe ${label} válida.`);
-  }
-  return value;
-}
+const { validId, parseDate, parseToken, formToken } = require('./formValidation');
 
 function parseForm(body = {}) {
   const descricao = requiredText(body.descricao, 'a descrição da despesa', 120);
@@ -57,13 +43,16 @@ async function renderPage(req, res, options = {}) {
     despesas: options.invalidFilters ? [] : await Despesa.listar(filters),
     filters, invalidFilters: options.invalidFilters || false,
     success: Object.hasOwn(messages, req.query.status || '') ? messages[req.query.status] : null,
-    error: options.error || null, formData: options.formData || {}, editingId: options.editingId || null
+    error: options.error || null, formData: options.formData || {}, editingId: options.editingId || null,
+    cadastroToken: formToken(options.editingId ? null : options.formData?.cadastro_token)
   });
 }
 
 async function handleError(error, req, res, next, options = {}) {
-  if (!(error instanceof ValidationError)) return next(error);
-  try { return await renderPage(req, res, { ...options, error: error.message, status: 400 }); }
+  const automaticCommission = error.constraint === 'despesa_comissao_automatica';
+  if (!(error instanceof ValidationError) && !automaticCommission) return next(error);
+  const message = automaticCommission ? 'A comissão automática deve ser alterada pela situação do agendamento.' : error.message;
+  try { return await renderPage(req, res, { ...options, error: message, status: automaticCommission ? 409 : 400 }); }
   catch (renderError) { return next(renderError); }
 }
 
@@ -83,7 +72,7 @@ async function index(req, res, next) {
 
 async function create(req, res, next) {
   try {
-    await Despesa.criar(parseForm(req.body));
+    await Despesa.criar(parseForm(req.body), parseToken(req.body?.cadastro_token));
     return res.redirect('/despesas?status=criado');
   } catch (error) { return handleError(error, req, res, next, { formData: req.body, filters: filterValues() }); }
 }
@@ -103,7 +92,7 @@ async function remove(req, res, next) {
   try {
     if (!await Despesa.excluir(Number(req.params.id))) return notFound(res);
     return res.redirect('/despesas?status=excluido');
-  } catch (error) { return next(error); }
+  } catch (error) { return handleError(error, req, res, next, { filters: filterValues() }); }
 }
 
 module.exports = { index, create, update, remove };

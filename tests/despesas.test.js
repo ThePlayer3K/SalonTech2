@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const express = require('express');
 const path = require('node:path');
+const { randomUUID } = require('node:crypto');
 const Despesa = require('../models/Despesa');
 const Usuario = require('../models/Usuario');
 
@@ -25,16 +26,18 @@ test('despesas: CRUD, pesquisa e permissões', async (t) => {
   let lists = 0;
   let failure = null;
   let lastFilters;
+  let lastToken;
   Usuario.buscarPorId = async (id) => Object.values(users).find((user) => user.id === id);
   Despesa.listar = async (filters) => {
-    if (failure) throw failure;
+    if (failure && failure.constraint !== 'despesa_comissao_automatica') throw failure;
     lists++;
     lastFilters = filters;
     return rows.filter((row) => (!filters.nome || row.descricao.toLowerCase().includes(filters.nome.toLowerCase()))
       && (!filters.dataInicio || row.data >= filters.dataInicio) && (!filters.dataFim || row.data <= filters.dataFim));
   };
-  Despesa.criar = async (data) => {
+  Despesa.criar = async (data, token) => {
     if (failure) throw failure;
+    lastToken = token;
     writes++;
     const row = { id: nextId++, ...data };
     rows.push(row);
@@ -82,7 +85,7 @@ test('despesas: CRUD, pesquisa e permissões', async (t) => {
     headers: { 'x-test-role': role || '', 'content-type': 'application/x-www-form-urlencoded' },
     body: body === undefined ? undefined : new URLSearchParams(body), redirect: 'manual'
   });
-  const data = { descricao: ' Energia elétrica ', valor: '1.234,56', tipo: 'variavel', data: '2026-11-02' };
+  const data = { descricao: ' Energia elétrica ', valor: '1.234,56', tipo: 'variavel', data: '2026-11-02', cadastro_token: randomUUID() };
 
   await t.test('visitantes são direcionados ao login e profissionais não acessam nenhuma operação', async () => {
     for (const role of [null, 'profissional']) {
@@ -156,9 +159,36 @@ test('despesas: CRUD, pesquisa e permissões', async (t) => {
     assert.equal(res.status, 302);
     assert.equal(res.headers.get('location'), '/despesas?status=criado');
     assert.deepEqual(rows.at(-1), { id: 4, descricao: 'Energia elétrica', valor: '1234.56', tipo: 'variavel', data: '2026-11-02' });
+    assert.equal(lastToken, data.cadastro_token);
     assert.equal((await request('master', '', { ...data, tipo: 'fixo', valor: '99999999.99', data: '2024-02-29' })).status, 302);
     assert.equal(rows.at(-1).tipo, 'fixo');
     assert.equal(rows.at(-1).valor, '99999999.99');
+  });
+  await t.test('formulário possui token por cadastro e rejeita envios sem token válido', async () => {
+    const first = await (await request('admin')).text();
+    const second = await (await request('admin')).text();
+    const token = (html) => html.match(/name="cadastro_token" value="([^"]+)"/)[1];
+    assert.notEqual(token(first), token(second));
+    const before = writes;
+    for (const value of ['', 'invalid']) assert.equal((await request('admin', '', { ...data, cadastro_token: value })).status, 400);
+    assert.equal(writes, before);
+    const invalid = await request('admin', '', { ...data, valor: '-1' });
+    assert.equal(token(await invalid.text()), data.cadastro_token);
+  });
+  await t.test('comissões automáticas não oferecem edição e retornam conflito se alteradas por POST', async () => {
+    rows.push({ id: 99, descricao: 'Comissão de Ana', valor: '20.00', tipo: 'variavel', data: '2026-11-02', agendamento_id: 10 });
+    const html = await (await request('admin')).text();
+    assert.match(html, /Comissão automática do agendamento #10/);
+    assert.ok(!html.includes('action="/despesas/99"'));
+    assert.ok(!html.includes('action="/despesas/99/excluir"'));
+    failure = { code: '23514', constraint: 'despesa_comissao_automatica' };
+    for (const [suffix, body] of [['/99', data], ['/99/excluir', {}]]) {
+      const res = await request('admin', suffix, body);
+      assert.equal(res.status, 409);
+      assert.match(await res.text(), /pela situação do agendamento/);
+    }
+    failure = null;
+    rows = rows.filter((row) => row.id !== 99);
   });
   await t.test('edita todos os campos e aceita formatos monetários brasileiros sem arredondar casas extras', async () => {
     for (const [valor, expected] of [['0', '0.00'], ['1234.56', '1234.56'], ['1.234', '1234.00'], ['1.234.567', '1234567.00'], ['12,3', '12.30']]) {
@@ -239,8 +269,10 @@ test('modelo de despesas parametriza filtros, escapa curingas e grava os quatro 
   assert.match(calls.at(-1).sql, /data <= \$1::date/);
   assert.deepEqual(calls.at(-1).params, ['2026-11-30']);
   const data = { descricao: nome, valor: '1234.56', tipo: 'fixo', data: '2026-11-02' };
-  await model.criar(data);
-  assert.deepEqual(calls.at(-1).params, [nome, '1234.56', 'fixo', '2026-11-02']);
+  const token = randomUUID();
+  await model.criar(data, token);
+  assert.deepEqual(calls.at(-1).params, [nome, '1234.56', 'fixo', '2026-11-02', token]);
+  assert.match(calls.at(-1).sql, /ON CONFLICT \(cadastro_token\)/);
   await model.atualizar(1, data);
   assert.deepEqual(calls.at(-1).params, [nome, '1234.56', 'fixo', '2026-11-02', 1]);
   await model.excluir(1);
