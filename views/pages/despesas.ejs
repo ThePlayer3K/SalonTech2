@@ -1,0 +1,51 @@
+<%- include('../partials/head', { title }) %>
+<%- include('../partials/header', { user }) %>
+<main id="conteudo">
+  <section class="container team-section">
+    <span class="section-kicker">Controle financeiro</span>
+    <h1>Despesas</h1>
+    <p class="team-intro">Cadastre e gerencie as despesas fixas e variáveis do salão. Todos os campos são obrigatórios.</p>
+    <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
+    <% if (success) { %><p class="team-notice" role="status"><%= success %></p><% } %>
+    <details class="team-create" open>
+      <summary>Adicionar despesa</summary>
+      <%- include('../partials/despesa-form', { despesa: editingId ? {} : formData, action: '/despesas', prefix: 'nova-despesa' }) %>
+    </details>
+    <section class="team-card despesa-search" aria-labelledby="pesquisa-despesas">
+      <h2 id="pesquisa-despesas">Pesquisar despesas</h2>
+      <p>Busque pelo nome ou descrição, pelo período ou combine os filtros. As datas inicial e final estão incluídas na pesquisa.</p>
+      <form class="team-form" method="GET" action="/despesas" role="search" aria-label="Pesquisar despesas">
+        <div class="team-form-grid">
+          <div class="field"><label for="pesquisa-nome">Nome ou descrição</label><input id="pesquisa-nome" name="nome" maxlength="120" placeholder="Ex.: aluguel" value="<%= filters.nome %>"></div>
+          <div class="field"><label for="pesquisa-inicio">Data inicial</label><input id="pesquisa-inicio" name="dataInicio" type="date" min="0001-01-01" max="9999-12-31" value="<%= filters.dataInicio %>"></div>
+          <div class="field"><label for="pesquisa-fim">Data final</label><input id="pesquisa-fim" name="dataFim" type="date" min="0001-01-01" max="9999-12-31" value="<%= filters.dataFim %>"></div>
+        </div>
+        <div class="despesa-search-actions">
+          <button class="btn btn-primary" type="submit">Pesquisar</button>
+          <a class="btn btn-outline" href="/despesas">Limpar filtros</a>
+        </div>
+      </form>
+    </section>
+    <div class="team-list">
+      <% despesas.forEach((despesa) => { %>
+        <article class="team-card catalog-card">
+          <h2><%= despesa.descricao %></h2>
+          <dl class="catalog-details">
+            <div><dt>Valor</dt><dd><%= despesa.valor === null ? 'Não informado' : Number(despesa.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></dd></div>
+            <div><dt>Tipo</dt><dd><%= despesa.tipo === 'fixo' ? 'Fixo' : 'Variável' %></dd></div>
+            <div><dt>Data</dt><dd><% if (despesa.data) { %><time datetime="<%= despesa.data %>"><%= despesa.data.split('-').reverse().join('/') %></time><% } else { %>Não informada<% } %></dd></div>
+          </dl>
+          <details class="team-edit" <%= editingId === despesa.id ? 'open' : '' %>>
+            <summary>Editar despesa</summary>
+            <%- include('../partials/despesa-form', { despesa: editingId === despesa.id ? formData : despesa, action: `/despesas/${despesa.id}`, prefix: `despesa-${despesa.id}` }) %>
+          </details>
+          <form method="POST" action="/despesas/<%= despesa.id %>/excluir" onsubmit="return confirm('Excluir esta despesa? Esta ação não pode ser desfeita.')">
+            <button class="mini-btn danger" type="submit" aria-label="Excluir despesa: <%= despesa.descricao %>">Excluir despesa</button>
+          </form>
+        </article>
+      <% }) %>
+      <% if (!despesas.length && !invalidFilters) { %><p class="empty-state"><%= filters.nome || filters.dataInicio || filters.dataFim ? 'Nenhuma despesa encontrada para os filtros informados.' : 'Nenhuma despesa cadastrada.' %></p><% } %>
+    </div>
+  </section>
+</main>
+<%- include('../partials/footer') %>

@@ -98,6 +98,11 @@
 .catalog-details dt { color: var(--muted); font-size: .85rem; font-weight: 800; }
 .catalog-details dd { overflow-wrap: anywhere; }
 .nav-account { color: var(--primary); font-size: .85rem; font-weight: 900; white-space: nowrap; }
+.despesa-form .team-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.despesa-search { margin-top: 24px; }
+.despesa-search h2 { font-size: 1.25rem; }
+.despesa-search > p { margin-top: 8px; color: var(--muted); }
+.despesa-search-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 
 @media (max-width: 980px) {
     .module-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -107,7 +112,7 @@
 
 @media (max-width: 640px) {
     .module-card-grid { grid-template-columns: 1fr; }
-    .team-form-grid, .account-form .team-form-grid, .client-form .team-form-grid { grid-template-columns: 1fr; }
+    .team-form-grid, .account-form .team-form-grid, .client-form .team-form-grid, .despesa-form .team-form-grid { grid-template-columns: 1fr; }
     .dashboard-hero { padding-top: 58px; }
     .placeholder-section { padding-top: 70px; }
 }

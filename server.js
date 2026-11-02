@@ -10,6 +10,7 @@ const clienteRoutes = require('./routes/clienteRoutes');
 const produtoRoutes = require('./routes/produtoRoutes');
 const formaPagamentoRoutes = require('./routes/formaPagamentoRoutes');
 const servicoRoutes = require('./routes/servicoRoutes');
+const despesaRoutes = require('./routes/despesaRoutes');
 const placeholderRoutes = require('./routes/placeholderRoutes');
 
 const app = express();
@@ -40,6 +41,7 @@ app.use('/clientes', clienteRoutes);
 app.use('/produtos', produtoRoutes);
 app.use('/pagamentos', formaPagamentoRoutes);
 app.use('/servicos', servicoRoutes);
+app.use('/despesas', despesaRoutes);
 app.use('/', placeholderRoutes);
 
 app.use((req, res) => {
