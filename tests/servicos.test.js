@@ -139,10 +139,38 @@ test('serviços: cadastro administrativo e consulta pessoal', async (t) => {
     assert.equal(rows[0].valor, '0.00');
     assert.equal(rows[0].percentual_comissao, '100.00');
   });
+  await t.test('cadastro e edição interpretam milhares sem confundir pontos decimais', async () => {
+    const originalRows = rows.map((row) => ({ ...row }));
+    const values = [
+      ['1.234', '1234.00'],
+      ['1.234.567', '1234567.00'],
+      ['99.999.999', '99999999.00'],
+      ['99.999.999,99', '99999999.99'],
+      ['1.234,56', '1234.56'],
+      ['1234.56', '1234.56'],
+      ['12.34', '12.34'],
+      ['0.00', '0.00']
+    ];
+    try {
+      for (const [valor, expected] of values) {
+        const created = await request('admin', '', { ...data, valor });
+        assert.equal(created.status, 302, valor);
+        assert.equal(rows.at(-1).valor, expected, `cadastro: ${valor}`);
+        rows.pop();
+
+        const updated = await request('master', '/2', { ...data, valor });
+        assert.equal(updated.status, 302, valor);
+        assert.equal(rows.find((row) => row.id === 2).valor, expected, `edição: ${valor}`);
+        assert.equal(rows.find((row) => row.id === 2).percentual_comissao, '35.50');
+      }
+    } finally {
+      rows = originalRows;
+    }
+  });
   await t.test('valida campos obrigatórios, limites numéricos e existência do responsável', async () => {
     const before = writes;
     const invalid = { nome: ['', 'a'.repeat(121)], categoria: ['', 'a'.repeat(81)], funcionario_id: ['', '-1', '999'],
-      valor: ['', '-1', 'abc', '1,234', '100000000', 'Infinity'], percentual_comissao: ['', '-1', '100.01', '1.234'],
+      valor: ['', '-1', 'abc', '1,234', '100000000', '100.000.000', '12.34.567', '1.23,45', 'Infinity'], percentual_comissao: ['', '-1', '100.01', '1.234'],
       duracao: ['', '0', '-1', '1.5', '2147483648'] };
     for (const [field, values] of Object.entries(invalid)) {
       for (const value of values) assert.equal((await request('admin', '', { ...data, [field]: value })).status, 400, `${field}: ${value}`);
