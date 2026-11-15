@@ -27,9 +27,14 @@
     <div class="nav-controls">
       <span class="user-summary"><%= user.nome %> · <%= user.papel === 'master' ? 'Master' : user.papel === 'admin' ? 'Administrador' : 'Profissional de beleza' %></span>
       <% if (user && user.papel !== 'master') { %><a class="nav-account" href="/minha-conta">Minha conta</a><% } %>
-      <form method="POST" action="/logout">
-        <button class="nav-logout" type="submit">Sair</button>
-      </form>
+      <div class="nav-session-actions">
+        <% if (typeof showThemeToggle !== 'undefined' && showThemeToggle) { %>
+          <button class="nav-action theme-toggle" type="button" data-theme-toggle aria-pressed="false" title="Ativar o modo escuro"><span aria-hidden="true">☾</span> Modo escuro</button>
+        <% } %>
+        <form method="POST" action="/logout">
+          <button class="nav-logout" type="submit">Sair</button>
+        </form>
+      </div>
     </div>
   </div>
 </header>
