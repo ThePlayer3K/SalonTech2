@@ -4,6 +4,13 @@
       <img src="/img/favicon.jpeg" alt="Logo SalonTech" class="brand-logo">
       <span>Salon<span class="gradient-text">Tech</span></span>
     </a>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-expanded="false" aria-controls="navMenu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+      <span>Menu</span>
+    </button>
+    <div class="nav-menu" id="navMenu">
     <nav aria-label="Navegação principal">
       <ul class="nav-links" id="navLinks">
         <% if (user && ['admin', 'master'].includes(user.papel)) { %>
@@ -35,6 +42,7 @@
           <button class="nav-logout" type="submit">Sair</button>
         </form>
       </div>
+    </div>
     </div>
   </div>
 </header>

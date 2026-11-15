@@ -326,8 +326,12 @@ section {
 }
 
 .navbar > .brand,
-.navbar > .nav-controls {
+.nav-controls {
     flex-shrink: 0;
+}
+
+.nav-menu {
+    display: contents;
 }
 
 .brand,
@@ -450,6 +454,20 @@ nav {
 
 .mobile-menu-btn {
     display: none;
+    gap: 8px;
+    padding: 0 12px;
+}
+
+.mobile-menu-btn:hover,
+.mobile-menu-btn[aria-expanded="true"] {
+    color: var(--primary);
+    background: var(--primary-soft);
+    border-color: var(--primary);
+}
+
+.mobile-menu-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
 }
 
 .btn {
@@ -1421,31 +1439,79 @@ nav {
     }
 
     .navbar {
+        position: relative;
+        flex-wrap: nowrap;
         gap: 12px;
     }
 
-    .navbar > nav {
-        order: 1;
-        flex-basis: 100%;
+    .mobile-menu-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .nav-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        width: min(100%, 380px);
+        max-height: calc(100vh - 88px);
+        max-height: calc(100dvh - 88px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .nav-menu.is-open {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .nav-menu nav {
+        flex: none;
     }
 
     .nav-links {
         width: 100%;
-    }
-
-    .nav-links {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: 1fr;
     }
 
     .nav-links a {
         width: 100%;
         white-space: normal;
-        text-align: center;
+        justify-content: flex-start;
+        text-align: left;
     }
 
     .nav-controls {
-        justify-content: flex-start;
+        align-items: stretch;
+        flex-direction: column;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
+
+    .nav-controls .user-summary {
+        max-width: none;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .nav-controls .nav-account {
+        display: flex;
+        align-items: center;
+        min-height: 42px;
+    }
+
+    .nav-session-actions {
+        flex-wrap: wrap;
     }
 
     .workflow-grid,
@@ -1484,14 +1550,6 @@ nav {
 @media (max-width: 620px) {
     .container {
         width: min(calc(100% - 28px), var(--container));
-    }
-
-    .nav-links {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .nav-controls {
-        flex-wrap: wrap;
     }
 
     section {
