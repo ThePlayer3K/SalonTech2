@@ -1,31 +1,76 @@
 <%
-  const dadosDoServico = (servico) => contratado && String(contratado.servico_id) === String(servico.id)
-    ? { funcionario_nome: contratado.funcionario_nome, duracao: contratado.duracao, valor: contratado.valor_total }
-    : servico;
+  function correspondeAoServicoContratado(servicoId) {
+    return contratado && String(contratado.servico_id) === String(servicoId);
+  }
+
+  function dadosDoServico(servico) {
+    if (!correspondeAoServicoContratado(servico.id)) {
+      return servico;
+    }
+
+    // A edição do mesmo serviço preserva as condições contratadas no agendamento.
+    return {
+      funcionario_nome: contratado.funcionario_nome,
+      duracao: contratado.duracao,
+      valor: contratado.valor_total
+    };
+  }
+
   const servicoSelecionado = servicos.find((servico) => String(servico.id) === String(agendamento.servico_id));
-  const dadosSelecionados = contratado && String(contratado.servico_id) === String(agendamento.servico_id)
-    ? dadosDoServico({ id: contratado.servico_id }) : servicoSelecionado;
-  const mostrarServicoContratado = contratado && String(contratado.servico_id) === String(agendamento.servico_id) && !servicoSelecionado;
-  const chaveDoNome = (nome) => nome.trim().normalize('NFC').toLocaleLowerCase('pt-BR');
-  const nomesRepetidos = new Map();
-  const contarNome = (nome) => {
+  const mantemServicoContratado = correspondeAoServicoContratado(agendamento.servico_id);
+  const mostrarServicoContratado = mantemServicoContratado && !servicoSelecionado;
+  let dadosSelecionados = servicoSelecionado;
+  if (mantemServicoContratado) {
+    dadosSelecionados = dadosDoServico({ id: contratado.servico_id });
+  }
+
+  function chaveDoNome(nome) {
+    return nome.trim().normalize('NFC').toLocaleLowerCase('pt-BR');
+  }
+
+  const quantidadePorNome = new Map();
+  function contarNome(nome) {
     const chave = chaveDoNome(nome);
-    nomesRepetidos.set(chave, (nomesRepetidos.get(chave) || 0) + 1);
-  };
+    quantidadePorNome.set(chave, (quantidadePorNome.get(chave) || 0) + 1);
+  }
+
   servicos.forEach((servico) => contarNome(servico.nome));
-  if (mostrarServicoContratado) contarNome(contratado.servico_nome);
-  const nomeDaOpcao = (nome, funcionarioNome) => nomesRepetidos.get(chaveDoNome(nome)) > 1
-    ? `${nome} — ${funcionarioNome}` : nome;
+  if (mostrarServicoContratado) {
+    contarNome(contratado.servico_nome);
+  }
+
+  function nomeDaOpcao(nome, funcionarioNome) {
+    if (quantidadePorNome.get(chaveDoNome(nome)) > 1) {
+      return `${nome} — ${funcionarioNome}`;
+    }
+    return nome;
+  }
+
+  let valorSelecionado = '';
+  if (dadosSelecionados?.valor != null) {
+    valorSelecionado = Number(dadosSelecionados.valor).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  }
+
+  const envioDesabilitado = !clientes.length || !pagamentos.length
+    || (!servicos.length && !agendamento.servico_id);
 %>
 <form class="team-form catalog-form" method="POST" action="<%= action %>" data-agendamento-form>
-  <% if (action === '/agendamentos') { %><input type="hidden" name="cadastro_token" value="<%= cadastroToken %>"><% } %>
+  <% if (action === '/agendamentos') { %>
+    <input type="hidden" name="cadastro_token" value="<%= cadastroToken %>">
+  <% } %>
   <div class="team-form-grid">
     <div class="field">
       <label for="<%= prefix %>-cliente">Cliente</label>
       <select id="<%= prefix %>-cliente" name="cliente_id" required>
         <option value="">Selecione o cliente</option>
         <% clientes.forEach((cliente) => { %>
-          <option value="<%= cliente.id %>" <%= String(agendamento.cliente_id) === String(cliente.id) ? 'selected' : '' %>><%= cliente.nome %></option>
+          <option
+            value="<%= cliente.id %>"
+            <%= String(agendamento.cliente_id) === String(cliente.id) ? 'selected' : '' %>
+          ><%= cliente.nome %></option>
         <% }) %>
       </select>
     </div>
@@ -34,29 +79,70 @@
       <select id="<%= prefix %>-servico" name="servico_id" required>
         <option value="">Selecione o serviço</option>
         <% if (mostrarServicoContratado) { %>
-          <option value="<%= contratado.servico_id %>" data-valor="<%= dadosSelecionados.valor %>" data-profissional="<%= dadosSelecionados.funcionario_nome %>" data-duracao="<%= dadosSelecionados.duracao %>" selected><%= nomeDaOpcao(contratado.servico_nome, dadosSelecionados.funcionario_nome) %></option>
+          <option
+            value="<%= contratado.servico_id %>"
+            data-valor="<%= dadosSelecionados.valor %>"
+            data-profissional="<%= dadosSelecionados.funcionario_nome %>"
+            data-duracao="<%= dadosSelecionados.duracao %>"
+            selected
+          ><%= nomeDaOpcao(contratado.servico_nome, dadosSelecionados.funcionario_nome) %></option>
         <% } %>
         <% servicos.forEach((servico) => { %>
           <% const dados = dadosDoServico(servico); %>
-          <option value="<%= servico.id %>" data-valor="<%= dados.valor %>" data-profissional="<%= dados.funcionario_nome %>" data-duracao="<%= dados.duracao ?? '' %>" <%= String(agendamento.servico_id) === String(servico.id) ? 'selected' : '' %>><%= nomeDaOpcao(servico.nome, dados.funcionario_nome) %></option>
+          <option
+            value="<%= servico.id %>"
+            data-valor="<%= dados.valor %>"
+            data-profissional="<%= dados.funcionario_nome %>"
+            data-duracao="<%= dados.duracao ?? '' %>"
+            <%= String(agendamento.servico_id) === String(servico.id) ? 'selected' : '' %>
+          ><%= nomeDaOpcao(servico.nome, dados.funcionario_nome) %></option>
         <% }) %>
       </select>
     </div>
     <div class="field">
       <label for="<%= prefix %>-profissional">Profissional</label>
-      <input id="<%= prefix %>-profissional" type="text" readonly data-profissional-servico placeholder="Selecione o serviço" value="<%= dadosSelecionados?.funcionario_nome || '' %>">
+      <input
+        id="<%= prefix %>-profissional"
+        type="text"
+        readonly
+        data-profissional-servico
+        placeholder="Selecione o serviço"
+        value="<%= dadosSelecionados?.funcionario_nome || '' %>"
+      >
     </div>
     <div class="field">
       <label for="<%= prefix %>-duracao">Duração (minutos)</label>
-      <input id="<%= prefix %>-duracao" type="text" readonly data-duracao-servico placeholder="Selecione o serviço" value="<%= dadosSelecionados?.duracao ?? '' %>">
+      <input
+        id="<%= prefix %>-duracao"
+        type="text"
+        readonly
+        data-duracao-servico
+        placeholder="Selecione o serviço"
+        value="<%= dadosSelecionados?.duracao ?? '' %>"
+      >
     </div>
-    <div class="field"><label for="<%= prefix %>-data">Data e hora</label><input id="<%= prefix %>-data" name="data_hora" type="datetime-local" required min="0001-01-01T00:00" max="9999-12-31T23:59" step="60" value="<%= agendamento.data_hora || '' %>"></div>
+    <div class="field">
+      <label for="<%= prefix %>-data">Data e hora</label>
+      <input
+        id="<%= prefix %>-data"
+        name="data_hora"
+        type="datetime-local"
+        required
+        min="0001-01-01T00:00"
+        max="9999-12-31T23:59"
+        step="60"
+        value="<%= agendamento.data_hora || '' %>"
+      >
+    </div>
     <div class="field">
       <label for="<%= prefix %>-pagamento">Forma de pagamento</label>
       <select id="<%= prefix %>-pagamento" name="forma_pag_id" required>
         <option value="">Selecione a forma de pagamento</option>
         <% pagamentos.forEach((pagamento) => { %>
-          <option value="<%= pagamento.id %>" <%= String(agendamento.forma_pag_id) === String(pagamento.id) ? 'selected' : '' %>><%= pagamento.nome %></option>
+          <option
+            value="<%= pagamento.id %>"
+            <%= String(agendamento.forma_pag_id) === String(pagamento.id) ? 'selected' : '' %>
+          ><%= pagamento.nome %></option>
         <% }) %>
       </select>
     </div>
@@ -64,14 +150,28 @@
       <label for="<%= prefix %>-situacao">Situação</label>
       <select id="<%= prefix %>-situacao" name="situacao" required>
         <% Object.entries(situacoes).forEach(([value, label]) => { %>
-          <option value="<%= value %>" <%= (agendamento.situacao || 'agendado') === value ? 'selected' : '' %>><%= label %></option>
+          <option
+            value="<%= value %>"
+            <%= (agendamento.situacao || 'agendado') === value ? 'selected' : '' %>
+          ><%= label %></option>
         <% }) %>
       </select>
     </div>
     <div class="field">
       <label for="<%= prefix %>-valor">Valor</label>
-      <input id="<%= prefix %>-valor" type="text" readonly data-valor-servico placeholder="Selecione o serviço" value="<%= dadosSelecionados?.valor == null ? '' : Number(dadosSelecionados.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %>">
+      <input
+        id="<%= prefix %>-valor"
+        type="text"
+        readonly
+        data-valor-servico
+        placeholder="Selecione o serviço"
+        value="<%= valorSelecionado %>"
+      >
     </div>
   </div>
-  <button class="btn btn-primary" type="submit" <%= !clientes.length || !pagamentos.length || (!servicos.length && !agendamento.servico_id) ? 'disabled' : '' %>><%= action === '/agendamentos' ? 'Cadastrar agendamento' : 'Salvar alterações' %></button>
+  <button
+    class="btn btn-primary"
+    type="submit"
+    <%= envioDesabilitado ? 'disabled' : '' %>
+  ><%= action === '/agendamentos' ? 'Cadastrar agendamento' : 'Salvar alterações' %></button>
 </form>

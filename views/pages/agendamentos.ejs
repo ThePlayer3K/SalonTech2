@@ -1,6 +1,11 @@
 <%- include('../partials/head', { title }) %>
 <%- include('../partials/header', { user }) %>
-<% const formatDateTime = (value) => { const [date, time] = value.split('T'); return `${date.split('-').reverse().join('/')} às ${time}`; }; %>
+<%
+  function formatDateTime(value) {
+    const [date, time] = value.split('T');
+    return `${date.split('-').reverse().join('/')} às ${time}`;
+  }
+%>
 <main id="conteudo">
   <section class="container team-section">
     <%- include('../partials/voltar-inicio') %>
@@ -14,7 +19,12 @@
       <% } %>
       <details class="team-create" open>
         <summary>Adicionar agendamento</summary>
-        <%- include('../partials/agendamento-form', { agendamento: editingId ? {} : formData, contratado: null, action: '/agendamentos', prefix: 'novo-agendamento' }) %>
+        <%- include('../partials/agendamento-form', {
+          agendamento: editingId ? {} : formData,
+          contratado: null,
+          action: '/agendamentos',
+          prefix: 'novo-agendamento'
+        }) %>
       </details>
     <% } %>
     <div class="team-list">
@@ -22,18 +32,45 @@
         <article class="team-card catalog-card" id="agendamento-<%= agendamento.id %>">
           <h2><%= agendamento.cliente_nome %> · <%= agendamento.servico_nome %></h2>
           <dl class="catalog-details">
-            <div><dt>Profissional</dt><dd><%= agendamento.funcionario_nome %></dd></div>
-            <div><dt>Data e hora</dt><dd><time datetime="<%= agendamento.data_hora %>"><%= formatDateTime(agendamento.data_hora) %></time></dd></div>
-            <div><dt>Término previsto</dt><dd><%= formatDateTime(agendamento.fim) %> (<%= agendamento.duracao %> min)</dd></div>
-            <div><dt>Forma de pagamento</dt><dd><%= agendamento.pagamento_nome %></dd></div>
-            <div><dt>Situação</dt><dd><%= situacoes[agendamento.situacao] %></dd></div>
-            <div><dt>Valor contratado</dt><dd><%= Number(agendamento.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></dd></div>
-            <div><dt>Comissão</dt><dd><%= Number(agendamento.percentual_comissao).toLocaleString('pt-BR') %>%</dd></div>
+            <div>
+              <dt>Profissional</dt>
+              <dd><%= agendamento.funcionario_nome %></dd>
+            </div>
+            <div>
+              <dt>Data e hora</dt>
+              <dd><time datetime="<%= agendamento.data_hora %>"><%= formatDateTime(agendamento.data_hora) %></time></dd>
+            </div>
+            <div>
+              <dt>Término previsto</dt>
+              <dd><%= formatDateTime(agendamento.fim) %> (<%= agendamento.duracao %> min)</dd>
+            </div>
+            <div>
+              <dt>Forma de pagamento</dt>
+              <dd><%= agendamento.pagamento_nome %></dd>
+            </div>
+            <div>
+              <dt>Situação</dt>
+              <dd><%= situacoes[agendamento.situacao] %></dd>
+            </div>
+            <div>
+              <dt>Valor contratado</dt>
+              <dd><%= Number(agendamento.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></dd>
+            </div>
+            <div>
+              <dt>Comissão</dt>
+              <dd><%= Number(agendamento.percentual_comissao).toLocaleString('pt-BR') %>%</dd>
+            </div>
           </dl>
           <% if (canManage) { %>
             <details class="team-edit" <%= editingId === agendamento.id ? 'open' : '' %>>
               <summary>Editar agendamento</summary>
-              <%- include('../partials/agendamento-form', { agendamento: editingId === agendamento.id ? { ...agendamento, ...formData } : agendamento, contratado: agendamento, action: `/agendamentos/${agendamento.id}`, prefix: `agendamento-${agendamento.id}` }) %>
+              <% const dadosDaEdicao = editingId === agendamento.id ? { ...agendamento, ...formData } : agendamento; %>
+              <%- include('../partials/agendamento-form', {
+                agendamento: dadosDaEdicao,
+                contratado: agendamento,
+                action: `/agendamentos/${agendamento.id}`,
+                prefix: `agendamento-${agendamento.id}`
+              }) %>
             </details>
           <% } %>
         </article>
