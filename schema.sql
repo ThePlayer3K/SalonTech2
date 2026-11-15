@@ -2,6 +2,7 @@
 -- Execute no banco já criado pelo Render com:
 -- psql "$DATABASE_URL" -f schema.sql
 -- Aplique também os arquivos de migrations/ em ordem, ou use npm run db:schema.
+-- 002: agendamentos/comissões; 003: recorrências mensais usadas pelo módulo de finanças.
 
 -- 1. TABELA DE FUNCIONÁRIOS
 CREATE TABLE IF NOT EXISTS public.funcionario (

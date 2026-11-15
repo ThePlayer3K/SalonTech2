@@ -162,6 +162,19 @@ test('agendamentos: formulários, acesso, validação e erros de conflito', asyn
       assert.match(await duration.text(), /duração positiva/);
     } finally { failure = null; }
   });
+  await t.test('concorrência no banco retorna 409 e preserva o formulário para nova tentativa', async () => {
+    failure = { code: '40P01' };
+    try {
+      for (const suffix of ['', '/1']) {
+        const res = await request('admin', suffix, data);
+        assert.equal(res.status, 409);
+        const html = await res.text();
+        assert.match(html, /tente salvar novamente/);
+        assert.match(html, /value="2026-11-03T10:00"/);
+        if (suffix) assert.match(html, /class="team-edit" open/);
+      }
+    } finally { failure = null; }
+  });
   await t.test('permite todas as quatro situações e edição não exige novo token', async () => {
     for (const situacao of ['agendado', 'pago', 'concluido', 'cancelado']) {
       const res = await request('master', '/1', { ...data, situacao, cadastro_token: '' });

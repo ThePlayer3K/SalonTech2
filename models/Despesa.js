@@ -1,6 +1,8 @@
 const { query } = require('../config/db');
+const DespesasFixas = require('../services/despesasFixas');
 
 async function listar({ nome = '', dataInicio = '', dataFim = '' } = {}) {
+  await DespesasFixas.gerarPendentes();
   const conditions = [];
   const params = [];
   if (nome) {
@@ -17,10 +19,13 @@ async function listar({ nome = '', dataInicio = '', dataFim = '' } = {}) {
     conditions.push(`data <= $${params.length}::date`);
   }
   const result = await query(
-    `SELECT id, nome AS descricao, valor, tipo, agendamento_id, to_char(data, 'YYYY-MM-DD') AS data
+    `SELECT despesa.id, nome AS descricao, valor, tipo, agendamento_id, recorrencia_id,
+            r.despesa_origem_id AS recorrencia_origem_id,
+            to_char(data, 'YYYY-MM-DD') AS data
        FROM public.despesa
+       LEFT JOIN public.despesa_recorrencia r ON r.id = despesa.recorrencia_id
        ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
-      ORDER BY data DESC NULLS LAST, id DESC`,
+      ORDER BY data DESC NULLS LAST, despesa.id DESC`,
     params
   );
   return result.rows;

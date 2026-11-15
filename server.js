@@ -11,6 +11,8 @@ const produtoRoutes = require('./routes/produtoRoutes');
 const formaPagamentoRoutes = require('./routes/formaPagamentoRoutes');
 const servicoRoutes = require('./routes/servicoRoutes');
 const despesaRoutes = require('./routes/despesaRoutes');
+const financaRoutes = require('./routes/financaRoutes');
+const { iniciarRotina } = require('./services/despesasFixas');
 const agendamentoRoutes = require('./routes/agendamentoRoutes');
 const placeholderRoutes = require('./routes/placeholderRoutes');
 
@@ -43,6 +45,7 @@ app.use('/produtos', produtoRoutes);
 app.use('/pagamentos', formaPagamentoRoutes);
 app.use('/servicos', servicoRoutes);
 app.use('/despesas', despesaRoutes);
+app.use('/financas', financaRoutes);
 app.use('/agendamentos', agendamentoRoutes);
 app.use('/', placeholderRoutes);
 
@@ -59,6 +62,7 @@ app.use((error, req, res, next) => {
 });
 
 if (require.main === module) {
+  iniciarRotina();
   app.listen(port, () => {
     console.log(`SalonTech ouvindo na porta ${port}`);
   });

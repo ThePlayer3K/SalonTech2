@@ -16,7 +16,7 @@ module.exports = createCatalogoController({
   description: 'Cadastre produtos e mantenha a quantidade em estoque e a categoria atualizadas.',
   fields: [
     { name: 'nome', label: 'Nome', type: 'text', maxLength: 120 },
-    { name: 'qtd_estoque', label: 'Quantidade', type: 'number', min: 0, max: 2147483647, step: 1 },
+    { name: 'qtd_estoque', label: 'Quantidade', type: 'text', mask: 'integer', inputmode: 'numeric', min: 0, max: 2147483647, maxLength: 10 },
     { name: 'categoria', label: 'Categoria', type: 'text', maxLength: 80 }
   ],
   parseForm,

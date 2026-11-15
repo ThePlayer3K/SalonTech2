@@ -47,6 +47,9 @@ async function handleError(error, req, res, next, options = {}) {
   else if (error.code === '23P01') {
     message = 'Conflito de horário: o profissional já possui outro agendamento durante esse período. Escolha outro horário.';
     status = 409;
+  } else if (error.code === '40P01') {
+    message = 'Outro agendamento foi alterado ao mesmo tempo. Verifique a agenda e tente salvar novamente.';
+    status = 409;
   } else if (error.code === '23503') {
     message = 'O cliente, serviço ou forma de pagamento selecionado não está mais disponível. Atualize a seleção.';
     status = 409;

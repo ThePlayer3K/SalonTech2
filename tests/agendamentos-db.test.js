@@ -40,9 +40,11 @@ test('PostgreSQL: comissões, conflitos concorrentes, histórico e idempotência
   await client.query('BEGIN');
   try {
     await client.query(rewrite(fs.readFileSync(path.join(__dirname, '../schema.sql'), 'utf8')));
-    const migration = rewrite(fs.readFileSync(path.join(__dirname, '../migrations/002-agendamentos.sql'), 'utf8'));
-    await client.query(migration);
-    await client.query(migration);
+    for (const name of fs.readdirSync(path.join(__dirname, '../migrations')).filter((name) => name.endsWith('.sql')).sort()) {
+      const migration = rewrite(fs.readFileSync(path.join(__dirname, '../migrations', name), 'utf8'));
+      await client.query(migration);
+      await client.query(migration);
+    }
     await client.query('COMMIT');
   } catch (error) { await client.query('ROLLBACK'); throw error; }
   const sql = (text, params) => client.query(rewrite(text), params);
@@ -180,7 +182,9 @@ test('PostgreSQL: comissões, conflitos concorrentes, histórico e idempotência
         VALUES (1,$1,'2026-11-11T10:00',1,'pago',$2) RETURNING id`);
       const results = await Promise.allSettled(clients.map((item, i) => item.query(query, [i + 1, randomUUID()])));
       assert.equal(results.filter((item) => item.status === 'fulfilled').length, 1);
-      assert.equal(results.find((item) => item.status === 'rejected').reason.code, '23P01');
+      // Inserções simultâneas no índice GiST também podem abortar por deadlock.
+      // Ambos os erros revertem a reserva perdedora e sua comissão por inteiro.
+      assert.ok(['23P01', '40P01'].includes(results.find((item) => item.status === 'rejected').reason.code));
       const id = results.find((item) => item.status === 'fulfilled').value.rows[0].id;
       assert.equal((await commission(id)).length, 1);
       assert.equal((await sql("SELECT id FROM public.agendamento WHERE data_hora='2026-11-11T10:00'")).rows.length, 1);

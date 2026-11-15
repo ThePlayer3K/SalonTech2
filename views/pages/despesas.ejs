@@ -5,6 +5,7 @@
     <span class="section-kicker">Controle financeiro</span>
     <h1>Despesas</h1>
     <p class="team-intro">Cadastre e gerencie as despesas fixas e variáveis do salão. Todos os campos são obrigatórios.</p>
+    <p class="finance-context">Despesas fixas se repetem mensalmente no dia da data informada. Em meses mais curtos, o lançamento ocorre no último dia do mês. Edite o cadastro original para alterar os próximos lançamentos; mude seu tipo para variável ou exclua o original para encerrar a recorrência. Os lançamentos anteriores são preservados.</p>
     <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
     <% if (success) { %><p class="team-notice" role="status"><%= success %></p><% } %>
     <details class="team-create" open>
@@ -28,19 +29,22 @@
     </section>
     <div class="team-list">
       <% despesas.forEach((despesa) => { %>
-        <article class="team-card catalog-card">
+        <article class="team-card catalog-card" id="despesa-<%= despesa.id %>">
           <h2><%= despesa.descricao %></h2>
           <dl class="catalog-details">
             <div><dt>Valor</dt><dd><%= despesa.valor === null ? 'Não informado' : Number(despesa.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></dd></div>
             <div><dt>Tipo</dt><dd><%= despesa.tipo === 'fixo' ? 'Fixo' : 'Variável' %></dd></div>
             <div><dt>Data</dt><dd><% if (despesa.data) { %><time datetime="<%= despesa.data %>"><%= despesa.data.split('-').reverse().join('/') %></time><% } else { %>Não informada<% } %></dd></div>
           </dl>
+          <% if (despesa.recorrencia_id) { %>
+            <p class="team-locked">Lançamento mensal automático. A edição ou exclusão deste lançamento afeta somente este mês e não gera outra recorrência.<% if (despesa.recorrencia_origem_id) { %> Para alterar os próximos meses, <a href="/despesas#despesa-<%= despesa.recorrencia_origem_id %>">edite o cadastro original #<%= despesa.recorrencia_origem_id %></a>.<% } else { %> O cadastro original foi excluído e não haverá novos lançamentos desta série.<% } %></p>
+          <% } %>
           <% if (despesa.agendamento_id) { %>
             <p class="team-locked">Comissão automática do agendamento #<%= despesa.agendamento_id %>. Para alterá-la, <a href="/agendamentos#agendamento-<%= despesa.agendamento_id %>">edite o agendamento</a>.</p>
           <% } else { %>
           <details class="team-edit" <%= editingId === despesa.id ? 'open' : '' %>>
             <summary>Editar despesa</summary>
-            <%- include('../partials/despesa-form', { despesa: editingId === despesa.id ? formData : despesa, action: `/despesas/${despesa.id}`, prefix: `despesa-${despesa.id}` }) %>
+            <%- include('../partials/despesa-form', { despesa: editingId === despesa.id ? { ...despesa, ...formData } : despesa, action: `/despesas/${despesa.id}`, prefix: `despesa-${despesa.id}` }) %>
           </details>
           <form method="POST" action="/despesas/<%= despesa.id %>/excluir" onsubmit="return confirm('Excluir esta despesa? Esta ação não pode ser desfeita.')">
             <button class="mini-btn danger" type="submit" aria-label="Excluir despesa: <%= despesa.descricao %>">Excluir despesa</button>
