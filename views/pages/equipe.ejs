@@ -1,5 +1,15 @@
 <%- include('../partials/head', { title }) %>
 <%- include('../partials/header', { user }) %>
+<%
+  const administradorMaster = user.papel === 'master';
+  const administrador = user.papel === 'admin';
+
+  function nomeDoPerfil(papel) {
+    if (papel === 'master') return 'Administrador master';
+    if (papel === 'admin') return 'Administrador';
+    return 'Profissional de beleza';
+  }
+%>
 <main id="conteudo">
   <section class="container team-section">
     <%- include('../partials/voltar-inicio') %>
@@ -10,38 +20,63 @@
     <% if (!selfOnly) { %>
       <details class="team-create" open>
         <summary>Adicionar funcionário</summary>
-        <%- include('../partials/equipe-form', { person: null, action: '/equipe', selfOnly: false }) %>
+        <%- include('../partials/equipe-form', {
+          person: null,
+          action: '/equipe',
+          selfOnly: false
+        }) %>
       </details>
     <% } %>
 
     <div class="team-list">
       <% people.forEach((person) => { %>
+        <%
+          const contaProtegida = person.papel === 'master';
+          const propriaConta = Number(person.usuario_id) === Number(user.id);
+          const podeEditar = selfOnly || administradorMaster
+            || (administrador && (person.papel !== 'admin' || propriaConta));
+          const podeExcluir = !selfOnly && (administradorMaster
+            || (administrador && person.papel !== 'admin'));
+          const classePerfil = person.papel === 'profissional' ? 'role-profissional' : 'role-admin';
+        %>
         <article class="team-card">
           <div class="team-card-heading">
-            <div><h2><%= person.nome %></h2><p>Usuário: <strong><%= person.login %></strong></p></div>
-            <span class="role-badge <%= person.papel === 'profissional' ? 'role-profissional' : 'role-admin' %>"><%= person.papel === 'master' ? 'Administrador master' : person.papel === 'admin' ? 'Administrador' : 'Profissional de beleza' %></span>
+            <div>
+              <h2><%= person.nome %></h2>
+              <p>Usuário: <strong><%= person.login %></strong></p>
+            </div>
+            <span class="role-badge <%= classePerfil %>"><%= nomeDoPerfil(person.papel) %></span>
           </div>
-          <% if (person.papel === 'master') { %>
+          <% if (contaProtegida) { %>
             <p class="team-locked">Conta protegida pelo ambiente. Não é possível alterar credenciais ou excluir este usuário.</p>
           <% } else { %>
-            <% const canEdit = selfOnly || user.papel === 'master' || (user.papel === 'admin' && (person.papel !== 'admin' || Number(person.usuario_id) === Number(user.id))); %>
-            <% if (canEdit) { %>
+            <% if (podeEditar) { %>
               <details class="team-edit" <%= selfOnly ? 'open' : '' %>>
                 <summary><%= selfOnly ? 'Editar meus dados e credenciais' : 'Editar funcionário e credenciais' %></summary>
-                <%- include('../partials/equipe-form', { person, action: selfOnly ? '/minha-conta' : `/equipe/${person.usuario_id}`, selfOnly }) %>
+                <%- include('../partials/equipe-form', {
+                  person,
+                  action: selfOnly ? '/minha-conta' : `/equipe/${person.usuario_id}`,
+                  selfOnly
+                }) %>
               </details>
             <% } else { %>
               <p class="team-locked">Somente o Administrador master pode gerenciar outras contas de Administrador.</p>
             <% } %>
-            <% if (!selfOnly && (user.papel === 'master' || (user.papel === 'admin' && person.papel !== 'admin'))) { %>
-              <form method="POST" action="/equipe/<%= person.usuario_id %>/excluir" data-confirm="Excluir funcionário e usuário? Esta ação não pode ser desfeita.">
+            <% if (podeExcluir) { %>
+              <form
+                method="POST"
+                action="/equipe/<%= person.usuario_id %>/excluir"
+                data-confirm="Excluir funcionário e usuário? Esta ação não pode ser desfeita."
+              >
                 <button class="mini-btn danger" type="submit">Excluir funcionário e usuário</button>
               </form>
             <% } %>
           <% } %>
         </article>
       <% }) %>
-      <% if (!people.length) { %><p class="empty-state">Nenhum funcionário cadastrado.</p><% } %>
+      <% if (!people.length) { %>
+        <p class="empty-state">Nenhum funcionário cadastrado.</p>
+      <% } %>
     </div>
   </section>
 </main>

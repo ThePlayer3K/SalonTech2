@@ -13,17 +13,29 @@ function renderPage(res, req, people, options = {}) {
 }
 
 async function index(req, res, next) {
-  try { return renderPage(res, req, await Equipe.listar()); }
-  catch (error) { return next(error); }
+  try {
+    const people = await Equipe.listar();
+    return renderPage(res, req, people);
+  } catch (error) {
+    return next(error);
+  }
 }
 
 async function profile(req, res, next) {
   try {
-    if (isMaster(req.session.user)) return res.status(403).render('pages/403', { title: 'Acesso negado' });
+    if (isMaster(req.session.user)) {
+      return acessoNegado(res);
+    }
+
     const person = await Equipe.buscarPorUsuario(req.session.user.id);
-    if (!person) return res.status(404).render('pages/404', { title: 'Conta não encontrada' });
+    if (!person) {
+      return res.status(404).render('pages/404', { title: 'Conta não encontrada' });
+    }
+
     return renderPage(res, req, [person], { selfOnly: true });
-  } catch (error) { return next(error); }
+  } catch (error) {
+    return next(error);
+  }
 }
 
 function parseForm(body, existing = null) {
@@ -31,18 +43,14 @@ function parseForm(body, existing = null) {
   const nome = String(body.nome || '').trim();
   const papel = String(body.papel || existing?.papel || 'profissional');
   const senha = String(body.senha || '');
-  if (!nome || !login) throw new Error('Nome do funcionário e usuário são obrigatórios.');
-  if (!['admin', 'profissional'].includes(papel)) throw new Error('Perfil de acesso inválido.');
-  if (!existing && senha.length < 8) throw new Error('A senha precisa ter pelo menos 8 caracteres.');
-  if (senha && senha.length < 8) throw new Error('A nova senha precisa ter pelo menos 8 caracteres.');
-  const salaryInput = String(body.salario || '').trim();
-  const normalizedSalary = salaryInput.includes(',')
-    ? salaryInput.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.')
-    : salaryInput.replace(/[^\d.-]/g, '');
-  const salario = salaryInput ? Number(normalizedSalary) : null;
-  if (salario !== null && (!Number.isFinite(salario) || salario < 0)) throw new Error('Informe um salário válido.');
+  validarCredenciais({ nome, login, papel, senha }, existing);
+  const salario = normalizarSalario(body.salario);
+
   return {
-    nome, login, senha, papel,
+    nome,
+    login,
+    senha,
+    papel,
     cpf: String(body.cpf || '').trim(),
     telefone: String(body.telefone || '').trim(),
     cargo: String(body.cargo || '').trim(),
@@ -51,61 +59,154 @@ function parseForm(body, existing = null) {
   };
 }
 
-function canManageTarget(actor, target) {
-  const masterLogin = String(process.env.ADMIN_NAME || '').trim().toLocaleLowerCase('pt-BR');
-  const targetLogin = String(target?.login || '').trim().toLocaleLowerCase('pt-BR');
-  if (!target || target.papel === 'master' || (masterLogin && targetLogin === masterLogin)) return false;
-  if (isMaster(actor)) return true;
-  if (actor.papel === 'admin') return target.papel !== 'admin' || Number(target.usuario_id) === Number(actor.id);
+function validarCredenciais({ nome, login, papel, senha }, contaExistente) {
+  if (!nome || !login) {
+    throw new Error('Nome do funcionário e usuário são obrigatórios.');
+  }
+  if (!['admin', 'profissional'].includes(papel)) {
+    throw new Error('Perfil de acesso inválido.');
+  }
+  if (!contaExistente && senha.length < 8) {
+    throw new Error('A senha precisa ter pelo menos 8 caracteres.');
+  }
+  if (senha && senha.length < 8) {
+    throw new Error('A nova senha precisa ter pelo menos 8 caracteres.');
+  }
+}
+
+function normalizarSalario(valor) {
+  const entrada = String(valor ?? '').trim();
+  if (!entrada) return null;
+
+  const texto = entrada.replace(/^R\$\s*/, '');
+  const formatoBrasileiro = /^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/;
+  const formatoDecimalComPonto = /^\d+(?:\.\d{1,2})?$/;
+  if (!formatoBrasileiro.test(texto) && !formatoDecimalComPonto.test(texto)) {
+    throw new Error('Informe um salário válido.');
+  }
+
+  const possuiMilhares = /^\d{1,3}(?:\.\d{3})+$/.test(texto);
+  let textoNormalizado = texto;
+  // Pontos de agrupamento são removidos; o ponto decimal é mantido.
+  if (texto.includes(',') || possuiMilhares) {
+    textoNormalizado = texto.replace(/\./g, '').replace(',', '.');
+  }
+
+  const salario = Number(textoNormalizado);
+  if (!Number.isFinite(salario) || salario < 0) {
+    throw new Error('Informe um salário válido.');
+  }
+  return salario;
+}
+
+function podeGerenciarConta(ator, conta) {
+  const loginDoMaster = String(process.env.ADMIN_NAME || '').trim().toLocaleLowerCase('pt-BR');
+  const loginDaConta = String(conta?.login || '').trim().toLocaleLowerCase('pt-BR');
+  const contaProtegida = conta?.papel === 'master' || (loginDoMaster && loginDaConta === loginDoMaster);
+
+  if (!conta || contaProtegida) {
+    return false;
+  }
+  if (isMaster(ator)) {
+    return true;
+  }
+  if (ator.papel === 'admin') {
+    const propriaConta = Number(conta.usuario_id) === Number(ator.id);
+    return conta.papel !== 'admin' || propriaConta;
+  }
   return false;
+}
+
+function podeEditarConta(ator, conta, edicaoPropria, usuarioId) {
+  if (!conta) return false;
+  if (edicaoPropria) {
+    return usuarioId === Number(ator.id) && !isMaster(ator);
+  }
+  return podeGerenciarConta(ator, conta);
+}
+
+function acessoNegado(res) {
+  return res.status(403).render('pages/403', { title: 'Acesso negado' });
+}
+
+async function atualizarSessaoDaConta(sessao, dados) {
+  sessao.user.nome = dados.login;
+  sessao.user.papel = dados.papel;
+  await new Promise((resolve, reject) => {
+    sessao.save((error) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
+  });
 }
 
 async function create(req, res, next) {
   try {
-    if (!isAdmin(req.session.user)) return res.status(403).render('pages/403', { title: 'Acesso negado' });
-    const data = parseForm(req.body);
-    await Equipe.salvar(data);
+    if (!isAdmin(req.session.user)) {
+      return acessoNegado(res);
+    }
+
+    const dados = parseForm(req.body);
+    await Equipe.salvar(dados);
     return res.redirect('/equipe?salvo=1');
   } catch (error) {
-    if (!error.code) return renderPage(res, req, await Equipe.listar(), { error: error.message });
+    if (!error.code) {
+      return renderPage(res, req, await Equipe.listar(), { error: error.message });
+    }
     return next(error);
   }
 }
 
 async function update(req, res, next) {
   try {
-    const targetId = Number(req.params.usuarioId || req.session.user.id);
-    const target = await Equipe.buscarPorUsuario(targetId);
-    const selfRequest = req.path === '/minha-conta';
-    if (!target || (selfRequest && targetId !== Number(req.session.user.id)) ||
-        (!selfRequest && !canManageTarget(req.session.user, target)) ||
-        (selfRequest && isMaster(req.session.user))) {
-      return res.status(403).render('pages/403', { title: 'Acesso negado' });
+    const usuarioId = Number(req.params.usuarioId || req.session.user.id);
+    const conta = await Equipe.buscarPorUsuario(usuarioId);
+    const edicaoPropria = req.path === '/minha-conta';
+    if (!podeEditarConta(req.session.user, conta, edicaoPropria, usuarioId)) {
+      return acessoNegado(res);
     }
 
-    const data = parseForm(req.body, target);
-    if (selfRequest) {
-      Object.assign(data, {
-        nome: target.nome, cpf: target.cpf || '', telefone: target.telefone || '',
-        cargo: target.cargo || '', tipoPagamento: target.tipo_pagamento || '', salario: target.salario
+    const dados = parseForm(req.body, conta);
+    if (edicaoPropria) {
+      // Minha conta permite alterar credenciais, preservando os dados profissionais.
+      Object.assign(dados, {
+        nome: conta.nome,
+        cpf: conta.cpf || '',
+        telefone: conta.telefone || '',
+        cargo: conta.cargo || '',
+        tipoPagamento: conta.tipo_pagamento || '',
+        salario: conta.salario
       });
     }
-    if (target.papel === 'master' || (req.session.user.papel === 'profissional' && data.papel !== target.papel)) {
-      return res.status(403).render('pages/403', { title: 'Acesso negado' });
+    const alteracaoDePerfilProibida = req.session.user.papel === 'profissional' && dados.papel !== conta.papel;
+    if (conta.papel === 'master' || alteracaoDePerfilProibida) {
+      return acessoNegado(res);
     }
-    await Equipe.salvar({ ...data, usuarioId: target.usuario_id, funcionarioId: target.funcionario_id });
-    if (selfRequest || Number(req.session.user.id) === Number(target.usuario_id)) {
-      req.session.user.nome = data.login;
-      req.session.user.papel = data.papel;
-      await new Promise((resolve, reject) => req.session.save((error) => error ? reject(error) : resolve()));
+
+    await Equipe.salvar({
+      ...dados,
+      usuarioId: conta.usuario_id,
+      funcionarioId: conta.funcionario_id
+    });
+    const contaDaSessao = Number(req.session.user.id) === Number(conta.usuario_id);
+    if (edicaoPropria || contaDaSessao) {
+      await atualizarSessaoDaConta(req.session, dados);
     }
-    return res.redirect(`${selfRequest ? '/minha-conta' : '/equipe'}?salvo=1`);
+
+    return res.redirect(`${edicaoPropria ? '/minha-conta' : '/equipe'}?salvo=1`);
   } catch (error) {
     if (!error.code) {
       const selfOnly = req.path === '/minha-conta';
-      const people = selfOnly
-        ? [await Equipe.buscarPorUsuario(req.session.user.id)].filter(Boolean)
-        : await Equipe.listar();
+      let people;
+      if (selfOnly) {
+        const person = await Equipe.buscarPorUsuario(req.session.user.id);
+        people = [person].filter(Boolean);
+      } else {
+        people = await Equipe.listar();
+      }
       return renderPage(res, req, people, { selfOnly, error: error.message });
     }
     return next(error);
@@ -114,13 +215,21 @@ async function update(req, res, next) {
 
 async function remove(req, res, next) {
   try {
-    if (!isAdmin(req.session.user)) return res.status(403).render('pages/403', { title: 'Acesso negado' });
-    const target = await Equipe.buscarPorUsuario(Number(req.params.usuarioId));
-    if (!canManageTarget(req.session.user, target)) return res.status(403).render('pages/403', { title: 'Acesso negado' });
-    await Equipe.excluir(target.usuario_id, target.funcionario_id);
+    if (!isAdmin(req.session.user)) {
+      return acessoNegado(res);
+    }
+
+    const conta = await Equipe.buscarPorUsuario(Number(req.params.usuarioId));
+    if (!podeGerenciarConta(req.session.user, conta)) {
+      return acessoNegado(res);
+    }
+
+    await Equipe.excluir(conta.usuario_id, conta.funcionario_id);
     return res.redirect('/equipe?salvo=1');
   } catch (error) {
-    if (!error.code) return renderPage(res, req, await Equipe.listar(), { error: error.message });
+    if (!error.code) {
+      return renderPage(res, req, await Equipe.listar(), { error: error.message });
+    }
     return next(error);
   }
 }

@@ -149,6 +149,7 @@
 .team-card-heading p, .team-locked { color: var(--muted); }
 .team-edit { margin: 18px 0 12px; }
 .team-form { display: grid; gap: 16px; margin-top: 16px; }
+.team-form[action="/equipe"] > button[type="submit"] { justify-self: center; }
 .team-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .account-form .team-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .account-form > button[type="submit"] { justify-self: center; }
