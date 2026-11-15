@@ -20,7 +20,8 @@
     <div class="module-card-grid">
       <% cards.forEach((card) => { %>
         <a class="module-card" href="<%= card.href %>">
-          <span class="module-card-arrow">→</span>
+          <span class="module-card-arrow" aria-hidden="true">→</span>
+          <span class="module-card-icon"><%- include('../partials/dashboard-icon', { href: card.href }) %></span>
           <h3><%= card.label %></h3>
           <p><%= card.description %></p>
         </a>

@@ -53,7 +53,8 @@
 .role-profissional { background: #126c68; }
 .dashboard-section { padding-top: 72px; padding-bottom: 90px; scroll-margin-top: 96px; }
 .module-card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
-.module-card { position: relative; min-height: 180px; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; padding: 24px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-soft); transition: transform 0.18s ease, border-color 0.18s ease; }
+.module-card { position: relative; min-height: 180px; display: flex; flex-direction: column; justify-content: flex-start; gap: 8px; padding: 24px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-soft); transition: transform 0.18s ease, border-color 0.18s ease; }
+.module-card-icon { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; margin-bottom: 4px; color: var(--primary); background: var(--primary-soft); border-radius: var(--radius); }
 .module-card:hover { border-color: var(--primary); transform: translateY(-4px); }
 .module-card h3 { font-size: 1.2rem; }
 .module-card p { color: var(--muted); font-size: 0.92rem; }
