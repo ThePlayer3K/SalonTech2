@@ -149,7 +149,7 @@ test('despesas: CRUD, pesquisa e permissões', async (t) => {
       const res = await request('admin', `?${query}`);
       assert.equal(res.status, 400, query);
       const html = await res.text();
-      assert.match(html, /role="alert"/);
+      assert.match(html, /id="feedbackDialog" role="alertdialog"/);
       assert.ok(!html.includes('Nenhuma despesa encontrada'));
     }
     assert.equal(lists, before);

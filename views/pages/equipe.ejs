@@ -6,8 +6,6 @@
     <span class="section-kicker"><%= selfOnly ? 'Acesso pessoal' : 'Funcionários e contas' %></span>
     <h1><%= selfOnly ? 'Minha conta' : 'Equipe e usuários' %></h1>
     <p class="team-intro">Cada funcionário possui uma conta vinculada. O login pode ser consultado; senhas são armazenadas protegidas e só podem ser redefinidas.</p>
-    <% if (error) { %><p class="team-notice team-error"><%= error %></p><% } %>
-    <% if (success) { %><p class="team-notice"><%= success %></p><% } %>
 
     <% if (!selfOnly) { %>
       <details class="team-create" open>
@@ -36,7 +34,7 @@
               <p class="team-locked">Somente o Administrador master pode gerenciar outras contas de Administrador.</p>
             <% } %>
             <% if (!selfOnly && (user.papel === 'master' || (user.papel === 'admin' && person.papel !== 'admin'))) { %>
-              <form method="POST" action="/equipe/<%= person.usuario_id %>/excluir" onsubmit="return confirm('Excluir funcionário e usuário?')">
+              <form method="POST" action="/equipe/<%= person.usuario_id %>/excluir" data-confirm="Excluir funcionário e usuário? Esta ação não pode ser desfeita.">
                 <button class="mini-btn danger" type="submit">Excluir funcionário e usuário</button>
               </form>
             <% } %>

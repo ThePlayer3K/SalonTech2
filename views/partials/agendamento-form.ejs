@@ -5,6 +5,17 @@
   const servicoSelecionado = servicos.find((servico) => String(servico.id) === String(agendamento.servico_id));
   const dadosSelecionados = contratado && String(contratado.servico_id) === String(agendamento.servico_id)
     ? dadosDoServico({ id: contratado.servico_id }) : servicoSelecionado;
+  const mostrarServicoContratado = contratado && String(contratado.servico_id) === String(agendamento.servico_id) && !servicoSelecionado;
+  const chaveDoNome = (nome) => nome.trim().normalize('NFC').toLocaleLowerCase('pt-BR');
+  const nomesRepetidos = new Map();
+  const contarNome = (nome) => {
+    const chave = chaveDoNome(nome);
+    nomesRepetidos.set(chave, (nomesRepetidos.get(chave) || 0) + 1);
+  };
+  servicos.forEach((servico) => contarNome(servico.nome));
+  if (mostrarServicoContratado) contarNome(contratado.servico_nome);
+  const nomeDaOpcao = (nome, funcionarioNome) => nomesRepetidos.get(chaveDoNome(nome)) > 1
+    ? `${nome} — ${funcionarioNome}` : nome;
 %>
 <form class="team-form catalog-form" method="POST" action="<%= action %>" data-agendamento-form>
   <% if (action === '/agendamentos') { %><input type="hidden" name="cadastro_token" value="<%= cadastroToken %>"><% } %>
@@ -22,12 +33,12 @@
       <label for="<%= prefix %>-servico">Serviço</label>
       <select id="<%= prefix %>-servico" name="servico_id" required>
         <option value="">Selecione o serviço</option>
-        <% if (contratado && String(contratado.servico_id) === String(agendamento.servico_id) && !servicoSelecionado) { %>
-          <option value="<%= contratado.servico_id %>" data-valor="<%= dadosSelecionados.valor %>" data-profissional="<%= dadosSelecionados.funcionario_nome %>" data-duracao="<%= dadosSelecionados.duracao %>" selected><%= contratado.servico_nome %></option>
+        <% if (mostrarServicoContratado) { %>
+          <option value="<%= contratado.servico_id %>" data-valor="<%= dadosSelecionados.valor %>" data-profissional="<%= dadosSelecionados.funcionario_nome %>" data-duracao="<%= dadosSelecionados.duracao %>" selected><%= nomeDaOpcao(contratado.servico_nome, dadosSelecionados.funcionario_nome) %></option>
         <% } %>
         <% servicos.forEach((servico) => { %>
           <% const dados = dadosDoServico(servico); %>
-          <option value="<%= servico.id %>" data-valor="<%= dados.valor %>" data-profissional="<%= dados.funcionario_nome %>" data-duracao="<%= dados.duracao ?? '' %>" <%= String(agendamento.servico_id) === String(servico.id) ? 'selected' : '' %>><%= servico.nome %></option>
+          <option value="<%= servico.id %>" data-valor="<%= dados.valor %>" data-profissional="<%= dados.funcionario_nome %>" data-duracao="<%= dados.duracao ?? '' %>" <%= String(agendamento.servico_id) === String(servico.id) ? 'selected' : '' %>><%= nomeDaOpcao(servico.nome, dados.funcionario_nome) %></option>
         <% }) %>
       </select>
     </div>

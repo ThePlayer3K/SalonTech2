@@ -1,0 +1,28 @@
+<dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+  <div class="confirm-dialog-body">
+    <span class="confirm-dialog-icon" aria-hidden="true">!</span>
+    <h2 id="confirmTitle">Confirmar exclusão</h2>
+    <p id="confirmMessage"></p>
+    <div class="confirm-dialog-actions">
+      <button class="btn btn-secondary" type="button" data-confirm-cancel autofocus>Cancelar</button>
+      <button class="btn btn-primary" type="button" data-confirm-accept>Sim, excluir</button>
+    </div>
+  </div>
+</dialog>
+<%
+  const feedbackError = typeof error === 'string' ? error : '';
+  const feedbackSuccess = typeof success === 'string' ? success : '';
+  const feedbackMessage = feedbackError || feedbackSuccess;
+%>
+<% if (feedbackMessage) { %>
+  <dialog class="confirm-dialog feedback-dialog <%= feedbackError ? 'feedback-error' : 'feedback-success' %>" id="feedbackDialog" role="<%= feedbackError ? 'alertdialog' : 'dialog' %>" aria-labelledby="feedbackTitle" aria-describedby="feedbackMessage">
+    <div class="confirm-dialog-body">
+      <span class="confirm-dialog-icon" aria-hidden="true"><%= feedbackError ? '!' : '✓' %></span>
+      <h2 id="feedbackTitle"><%= feedbackError ? 'Não foi possível concluir' : 'Sucesso' %></h2>
+      <p id="feedbackMessage"><%= feedbackMessage %></p>
+      <div class="confirm-dialog-actions">
+        <button class="btn btn-primary" type="button" data-feedback-close autofocus>OK</button>
+      </div>
+    </div>
+  </dialog>
+<% } %>

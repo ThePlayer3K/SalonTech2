@@ -7,8 +7,6 @@
     <h1><%= title %></h1>
     <p class="team-intro"><%= description %></p>
     <% if (!canManage) { %><p class="team-notice">Seu acesso permite apenas a consulta destes dados.</p><% } %>
-    <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
-    <% if (success) { %><p class="team-notice" role="status"><%= success %></p><% } %>
     <% if (canManage) { %>
       <details class="team-create" open>
         <summary>Adicionar <%= singular %></summary>
@@ -31,7 +29,7 @@
               <summary>Editar <%= singular %></summary>
               <%- include('../partials/catalogo-form', { record: editingId === record.id ? formData : record, action: `${basePath}/${record.id}`, prefix: `registro-${record.id}` }) %>
             </details>
-            <form method="POST" action="<%= basePath %>/<%= record.id %>/excluir" onsubmit="return confirm('Excluir este cadastro? Esta ação não pode ser desfeita.')">
+            <form method="POST" action="<%= basePath %>/<%= record.id %>/excluir" data-confirm="Excluir este cadastro? Esta ação não pode ser desfeita.">
               <button class="mini-btn danger" type="submit" aria-label="Excluir <%= singular %>: <%= record.nome %>">Excluir <%= singular %></button>
             </form>
           <% } %>

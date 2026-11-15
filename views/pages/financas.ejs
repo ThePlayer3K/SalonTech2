@@ -7,7 +7,6 @@
     <span class="section-kicker">Controle financeiro</span>
     <h1>Finanças</h1>
     <p class="team-intro">Acompanhe as entradas, as despesas e o caixa líquido do salão no período selecionado.</p>
-    <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
     <form class="team-card team-form finance-filters" method="GET" action="/financas" aria-label="Período do relatório financeiro">
       <div class="team-form-grid">
         <div class="field"><label for="financas-inicio">Início do período</label><input id="financas-inicio" name="dataInicio" type="date" min="0001-01-01" max="9999-12-31" required value="<%= filters.dataInicio %>"></div>

@@ -6,8 +6,6 @@
     <span class="section-kicker">Catálogo do salão</span>
     <h1>Serviços</h1>
     <p class="team-intro"><%= canManage ? 'Cadastre e gerencie os serviços de todos os funcionários. Todos os campos são obrigatórios.' : 'Consulte os serviços sob sua responsabilidade. Seu acesso é somente leitura.' %></p>
-    <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
-    <% if (success) { %><p class="team-notice" role="status"><%= success %></p><% } %>
     <% if (canManage) { %>
       <% if (!funcionarios.length) { %><p class="team-notice">Cadastre um funcionário na <a href="/equipe">Equipe</a> para vinculá-lo a um serviço.</p><% } %>
       <details class="team-create" open>
@@ -31,7 +29,7 @@
               <summary>Editar serviço</summary>
               <%- include('../partials/servico-form', { servico: editingId === servico.id ? formData : servico, action: `/servicos/${servico.id}`, prefix: `servico-${servico.id}` }) %>
             </details>
-            <form method="POST" action="/servicos/<%= servico.id %>/excluir" onsubmit="return confirm('Excluir este serviço? Esta ação não pode ser desfeita.')">
+            <form method="POST" action="/servicos/<%= servico.id %>/excluir" data-confirm="Excluir este serviço? Esta ação não pode ser desfeita.">
               <button class="mini-btn danger" type="submit" aria-label="Excluir serviço: <%= servico.nome %>">Excluir serviço</button>
             </form>
           <% } %>

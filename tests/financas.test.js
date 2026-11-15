@@ -84,7 +84,7 @@ test('finanças: acesso, filtros, apresentação e falhas', async (t) => {
       assert.equal(res.status, 400, query);
       assert.deepEqual(calls, []);
       const html = await res.text();
-      assert.match(html, /role="alert"/);
+      assert.match(html, /id="feedbackDialog" role="alertdialog"/);
       assert.ok(!html.includes('<script>alert(1)</script>'));
       assert.ok(!html.includes('aria-label="Resumo financeiro"'));
     }

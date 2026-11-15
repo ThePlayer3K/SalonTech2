@@ -8,8 +8,6 @@
     <h1>Agendamentos</h1>
     <p class="team-intro"><%= ['admin', 'master'].includes(user.papel) ? 'Cadastre e acompanhe os atendimentos do salão.' : 'Cadastre e acompanhe os seus atendimentos.' %> Para liberar um horário, altere a situação para Cancelado. Agendamentos não podem ser excluídos.</p>
     <p class="team-notice">A situação Pago gera a comissão do profissional automaticamente. Ao mudar para qualquer outra situação, a comissão é removida.</p>
-    <% if (error) { %><p class="team-notice team-error" role="alert"><%= error %></p><% } %>
-    <% if (success) { %><p class="team-notice" role="status"><%= success %></p><% } %>
     <% if (canManage) { %>
       <% if (!clientes.length || !servicos.length || !pagamentos.length) { %>
         <p class="team-notice">Para cadastrar um agendamento, é necessário ter cliente, serviço com profissional e forma de pagamento cadastrados.</p>
