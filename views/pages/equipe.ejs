@@ -2,6 +2,7 @@
 <%- include('../partials/header', { user }) %>
 <main id="conteudo">
   <section class="container team-section">
+    <%- include('../partials/voltar-inicio') %>
     <span class="section-kicker"><%= selfOnly ? 'Acesso pessoal' : 'Funcionários e contas' %></span>
     <h1><%= selfOnly ? 'Minha conta' : 'Equipe e usuários' %></h1>
     <p class="team-intro">Cada funcionário possui uma conta vinculada. O login pode ser consultado; senhas são armazenadas protegidas e só podem ser redefinidas.</p>

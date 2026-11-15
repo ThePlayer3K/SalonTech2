@@ -3,6 +3,7 @@
 <% const formatDateTime = (value) => { const [date, time] = value.split('T'); return `${date.split('-').reverse().join('/')} às ${time}`; }; %>
 <main id="conteudo">
   <section class="container team-section">
+    <%- include('../partials/voltar-inicio') %>
     <span class="section-kicker">Agenda do salão</span>
     <h1>Agendamentos</h1>
     <p class="team-intro"><%= ['admin', 'master'].includes(user.papel) ? 'Cadastre e acompanhe os atendimentos do salão.' : 'Cadastre e acompanhe os seus atendimentos.' %> Para liberar um horário, altere a situação para Cancelado. Agendamentos não podem ser excluídos.</p>

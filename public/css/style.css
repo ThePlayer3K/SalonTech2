@@ -65,6 +65,7 @@
 .auth-note { color: var(--muted); font-size: 0.84rem; text-align: center; }
 
 .team-section { padding-top: 64px; padding-bottom: 88px; }
+.module-navigation { display: flex; margin-bottom: 24px; }
 .team-section h1 { margin: 4px 0 8px; font-size: clamp(2.2rem, 5vw, 3.4rem); }
 .team-intro { max-width: 760px; margin-bottom: 24px; color: var(--muted); }
 .team-notice { margin: 12px 0; padding: 12px 16px; color: var(--support); background: var(--support-soft); border: 1px solid var(--border); border-radius: var(--radius); font-weight: 800; }

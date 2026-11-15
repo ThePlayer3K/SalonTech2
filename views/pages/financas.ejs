@@ -3,6 +3,7 @@
 <% const moeda = (valor) => Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); %>
 <main id="conteudo">
   <section class="container team-section finance-page">
+    <%- include('../partials/voltar-inicio') %>
     <span class="section-kicker">Controle financeiro</span>
     <h1>Finanças</h1>
     <p class="team-intro">Acompanhe as entradas, as despesas e o caixa líquido do salão no período selecionado.</p>

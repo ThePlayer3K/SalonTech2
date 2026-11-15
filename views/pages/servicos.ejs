@@ -2,6 +2,7 @@
 <%- include('../partials/header', { user }) %>
 <main id="conteudo">
   <section class="container team-section">
+    <%- include('../partials/voltar-inicio') %>
     <span class="section-kicker">Catálogo do salão</span>
     <h1>Serviços</h1>
     <p class="team-intro"><%= canManage ? 'Cadastre e gerencie os serviços de todos os funcionários. Todos os campos são obrigatórios.' : 'Consulte os serviços sob sua responsabilidade. Seu acesso é somente leitura.' %></p>
