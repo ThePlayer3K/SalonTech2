@@ -3,30 +3,32 @@ const DespesasFixas = require('../services/despesasFixas');
 
 async function listar({ nome = '', dataInicio = '', dataFim = '' } = {}) {
   await DespesasFixas.gerarPendentes();
-  const conditions = [];
-  const params = [];
+  const condicoes = [];
+  const parametros = [];
   if (nome) {
     // Trata os curingas do LIKE como texto digitado pelo usuário.
-    params.push(`%${nome.replace(/[\\%_]/g, '\\$&')}%`);
-    conditions.push(`nome ILIKE $${params.length} ESCAPE E'\\\\'`);
+    parametros.push(`%${nome.replace(/[\\%_]/g, '\\$&')}%`);
+    condicoes.push(`nome ILIKE $${parametros.length} ESCAPE E'\\\\'`);
   }
   if (dataInicio) {
-    params.push(dataInicio);
-    conditions.push(`data >= $${params.length}::date`);
+    parametros.push(dataInicio);
+    condicoes.push(`data >= $${parametros.length}::date`);
   }
   if (dataFim) {
-    params.push(dataFim);
-    conditions.push(`data <= $${params.length}::date`);
+    parametros.push(dataFim);
+    condicoes.push(`data <= $${parametros.length}::date`);
   }
+
+  const clausulaWhere = condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '';
   const result = await query(
     `SELECT despesa.id, nome AS descricao, valor, tipo, agendamento_id, recorrencia_id,
             r.despesa_origem_id AS recorrencia_origem_id,
             to_char(data, 'YYYY-MM-DD') AS data
        FROM public.despesa
        LEFT JOIN public.despesa_recorrencia r ON r.id = despesa.recorrencia_id
-       ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
+       ${clausulaWhere}
       ORDER BY data DESC NULLS LAST, despesa.id DESC`,
-    params
+    parametros
   );
   return result.rows;
 }

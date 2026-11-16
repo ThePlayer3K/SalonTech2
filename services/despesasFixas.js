@@ -5,19 +5,30 @@ async function gerarPendentes() {
   return result.rows[0].criadas;
 }
 
-function iniciarRotina({ intervalo = 60000, onError = (error) => console.error('Falha ao gerar despesas fixas:', error) } = {}) {
+function iniciarRotina({
+  intervalo = 60000,
+  onError = (error) => console.error('Falha ao gerar despesas fixas:', error)
+} = {}) {
   let executando = false;
   async function executar() {
-    if (executando) return;
+    if (executando) {
+      return;
+    }
+
     executando = true;
-    try { await module.exports.gerarPendentes(); }
-    catch (error) { onError(error); }
-    finally { executando = false; }
+    try {
+      await module.exports.gerarPendentes();
+    } catch (error) {
+      onError(error);
+    } finally {
+      executando = false;
+    }
   }
+
   void executar();
-  const timer = setInterval(executar, intervalo);
-  timer.unref();
-  return () => clearInterval(timer);
+  const temporizador = setInterval(executar, intervalo);
+  temporizador.unref();
+  return () => clearInterval(temporizador);
 }
 
 module.exports = { gerarPendentes, iniciarRotina };

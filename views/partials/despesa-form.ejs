@@ -1,8 +1,33 @@
 <form class="team-form catalog-form despesa-form" method="POST" action="<%= action %>">
-  <% if (action === '/despesas') { %><input type="hidden" name="cadastro_token" value="<%= cadastroToken %>"><% } %>
+  <% if (action === '/despesas') { %>
+    <input type="hidden" name="cadastro_token" value="<%= cadastroToken %>">
+  <% } %>
   <div class="team-form-grid">
-    <div class="field"><label for="<%= prefix %>-descricao">Descrição</label><input id="<%= prefix %>-descricao" name="descricao" required maxlength="120" value="<%= despesa.descricao || '' %>"></div>
-    <div class="field"><label for="<%= prefix %>-valor">Valor (R$)</label><input id="<%= prefix %>-valor" name="valor" inputmode="decimal" data-mask="currency" data-min="0" data-max="99999999.99" required maxlength="15" placeholder="0,00" value="<%= despesa.valor ?? '' %>"></div>
+    <div class="field">
+      <label for="<%= prefix %>-descricao">Descrição</label>
+      <input
+        id="<%= prefix %>-descricao"
+        name="descricao"
+        required
+        maxlength="120"
+        value="<%= despesa.descricao || '' %>"
+      >
+    </div>
+    <div class="field">
+      <label for="<%= prefix %>-valor">Valor (R$)</label>
+      <input
+        id="<%= prefix %>-valor"
+        name="valor"
+        inputmode="decimal"
+        data-mask="currency"
+        data-min="0"
+        data-max="99999999.99"
+        required
+        maxlength="15"
+        placeholder="0,00"
+        value="<%= despesa.valor ?? '' %>"
+      >
+    </div>
     <div class="field">
       <label for="<%= prefix %>-tipo">Tipo</label>
       <select id="<%= prefix %>-tipo" name="tipo" required>
@@ -11,7 +36,18 @@
         <option value="variavel" <%= despesa.tipo === 'variavel' ? 'selected' : '' %>>Variável</option>
       </select>
     </div>
-    <div class="field"><label for="<%= prefix %>-data">Data</label><input id="<%= prefix %>-data" name="data" type="date" required min="0001-01-01" max="9999-12-31" value="<%= despesa.data || '' %>"></div>
+    <div class="field">
+      <label for="<%= prefix %>-data">Data</label>
+      <input
+        id="<%= prefix %>-data"
+        name="data"
+        type="date"
+        required
+        min="0001-01-01"
+        max="9999-12-31"
+        value="<%= despesa.data || '' %>"
+      >
+    </div>
   </div>
   <p class="finance-context"><%= despesa.recorrencia_id ? 'As alterações afetam somente este lançamento mensal.' : 'Ao selecionar Fixo, o valor será lançado automaticamente a cada mês, a partir do mês seguinte à data informada.' %></p>
   <button class="btn btn-primary" type="submit"><%= action === '/despesas' ? 'Cadastrar despesa' : 'Salvar alterações' %></button>
