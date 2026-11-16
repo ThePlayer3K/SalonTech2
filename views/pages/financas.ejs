@@ -1,6 +1,24 @@
 <%- include('../partials/head', { title }) %>
 <%- include('../partials/header', { user }) %>
-<% const moeda = (valor) => Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); %>
+<%
+  const moeda = (valor) => Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const formatarData = (data) => data.split('-').reverse().join('/');
+  const atendimentosPagos = (quantidade) => quantidade === 1 ? 'atendimento pago' : 'atendimentos pagos';
+
+  function classeSaldo(valor) {
+    const saldo = Number(valor);
+    if (saldo < 0) return 'negative';
+    if (saldo > 0) return 'positive';
+    return '';
+  }
+
+  function tipoDespesa(despesa) {
+    if (despesa.prevista) return 'Fixa prevista';
+    if (despesa.agendamento_id) return 'Comissão';
+    if (despesa.recorrencia_id) return 'Fixa automática';
+    return despesa.tipo === 'fixo' ? 'Fixa' : 'Variável';
+  }
+%>
 <main id="conteudo">
   <section class="container team-section finance-page">
     <%- include('../partials/voltar-inicio') %>
@@ -9,8 +27,30 @@
     <p class="team-intro">Acompanhe as entradas, as despesas e o caixa líquido do salão no período selecionado.</p>
     <form class="team-card team-form finance-filters" method="GET" action="/financas" aria-label="Período do relatório financeiro">
       <div class="team-form-grid">
-        <div class="field"><label for="financas-inicio">Início do período</label><input id="financas-inicio" name="dataInicio" type="date" min="0001-01-01" max="9999-12-31" required value="<%= filters.dataInicio %>"></div>
-        <div class="field"><label for="financas-fim">Fim do período</label><input id="financas-fim" name="dataFim" type="date" min="0001-01-01" max="9999-12-31" required value="<%= filters.dataFim %>"></div>
+        <div class="field">
+          <label for="financas-inicio">Início do período</label>
+          <input
+            id="financas-inicio"
+            name="dataInicio"
+            type="date"
+            min="0001-01-01"
+            max="9999-12-31"
+            required
+            value="<%= filters.dataInicio %>"
+          >
+        </div>
+        <div class="field">
+          <label for="financas-fim">Fim do período</label>
+          <input
+            id="financas-fim"
+            name="dataFim"
+            type="date"
+            min="0001-01-01"
+            max="9999-12-31"
+            required
+            value="<%= filters.dataFim %>"
+          >
+        </div>
       </div>
       <div class="despesa-search-actions">
         <button class="btn btn-primary" type="submit">Atualizar relatório</button>
@@ -18,11 +58,21 @@
       </div>
     </form>
     <% if (relatorio) { %>
-      <p class="finance-context"><time datetime="<%= filters.dataInicio %>"><%= filters.dataInicio.split('-').reverse().join('/') %></time> a <time datetime="<%= filters.dataFim %>"><%= filters.dataFim.split('-').reverse().join('/') %></time> · <%= relatorio.resumo.atendimentos %> atendimento<%= relatorio.resumo.atendimentos === 1 ? '' : 's' %> pago<%= relatorio.resumo.atendimentos === 1 ? '' : 's' %></p>
+      <p class="finance-context"><time datetime="<%= filters.dataInicio %>"><%= formatarData(filters.dataInicio) %></time> a <time datetime="<%= filters.dataFim %>"><%= formatarData(filters.dataFim) %></time> · <%= relatorio.resumo.atendimentos %> <%= atendimentosPagos(relatorio.resumo.atendimentos) %></p>
       <div class="finance-summary" aria-label="Resumo financeiro">
-        <article><span>Entradas</span><strong><%= moeda(relatorio.resumo.entradas) %></strong></article>
-        <article><span>Despesas</span><strong><%= moeda(relatorio.resumo.despesas) %></strong></article>
-        <article class="<%= Number(relatorio.resumo.liquido) < 0 ? 'negative' : Number(relatorio.resumo.liquido) > 0 ? 'positive' : '' %>"><span>Caixa líquido</span><strong><%= moeda(relatorio.resumo.liquido) %></strong><small>Entradas menos despesas</small></article>
+        <article>
+          <span>Entradas</span>
+          <strong><%= moeda(relatorio.resumo.entradas) %></strong>
+        </article>
+        <article>
+          <span>Despesas</span>
+          <strong><%= moeda(relatorio.resumo.despesas) %></strong>
+        </article>
+        <article class="<%= classeSaldo(relatorio.resumo.liquido) %>">
+          <span>Caixa líquido</span>
+          <strong><%= moeda(relatorio.resumo.liquido) %></strong>
+          <small>Entradas menos despesas</small>
+        </article>
       </div>
       <p class="finance-context">Entradas de agendamentos com situação Pago, pela data do atendimento. Cada vencimento mensal de uma despesa fixa aparece separadamente, com sua data. As despesas incluem as comissões automáticas.</p>
       <% if (relatorio.despesas.some((despesa) => despesa.prevista)) { %>
@@ -33,29 +83,44 @@
           <h2 id="financas-servicos">Entradas por serviço</h2>
           <% relatorio.servicos.forEach((servico) => { %>
             <div class="finance-row">
-              <div><span><%= servico.nome %></span><small><%= servico.quantidade %> atendimento<%= servico.quantidade === 1 ? '' : 's' %> pago<%= servico.quantidade === 1 ? '' : 's' %></small></div>
+              <div>
+                <span><%= servico.nome %></span>
+                <small><%= servico.quantidade %> <%= atendimentosPagos(servico.quantidade) %></small>
+              </div>
               <strong><%= moeda(servico.total) %></strong>
             </div>
           <% }) %>
-          <% if (!relatorio.servicos.length) { %><p class="empty-state">Nenhuma entrada no período.</p><% } %>
+          <% if (!relatorio.servicos.length) { %>
+            <p class="empty-state">Nenhuma entrada no período.</p>
+          <% } %>
         </section>
         <section class="finance-section" aria-labelledby="financas-despesas">
           <h2 id="financas-despesas">Despesas do período</h2>
           <% relatorio.despesas.forEach((despesa) => { %>
             <div class="finance-row">
-              <div><span><%= despesa.nome %></span><small><time datetime="<%= despesa.data %>"><%= despesa.data.split('-').reverse().join('/') %></time> · <%= despesa.prevista ? 'Fixa prevista' : despesa.agendamento_id ? 'Comissão' : despesa.recorrencia_id ? 'Fixa automática' : despesa.tipo === 'fixo' ? 'Fixa' : 'Variável' %></small></div>
+              <div>
+                <span><%= despesa.nome %></span>
+                <small><time datetime="<%= despesa.data %>"><%= formatarData(despesa.data) %></time> · <%= tipoDespesa(despesa) %></small>
+              </div>
               <strong><%= moeda(despesa.valor) %></strong>
             </div>
           <% }) %>
-          <% if (!relatorio.despesas.length) { %><p class="empty-state">Nenhuma despesa no período.</p><% } %>
+          <% if (!relatorio.despesas.length) { %>
+            <p class="empty-state">Nenhuma despesa no período.</p>
+          <% } %>
           <a class="finance-manage" href="/despesas?dataInicio=<%= filters.dataInicio %>&amp;dataFim=<%= filters.dataFim %>">Gerenciar despesas</a>
         </section>
         <section class="finance-section" aria-labelledby="financas-pagamentos">
           <h2 id="financas-pagamentos">Vendas por pagamento</h2>
           <% relatorio.pagamentos.forEach((pagamento) => { %>
-            <div class="finance-row"><span><%= pagamento.nome %></span><strong><%= moeda(pagamento.total) %></strong></div>
+            <div class="finance-row">
+              <span><%= pagamento.nome %></span>
+              <strong><%= moeda(pagamento.total) %></strong>
+            </div>
           <% }) %>
-          <% if (!relatorio.pagamentos.length) { %><p class="empty-state">Nenhuma venda paga no período.</p><% } %>
+          <% if (!relatorio.pagamentos.length) { %>
+            <p class="empty-state">Nenhuma venda paga no período.</p>
+          <% } %>
         </section>
       </div>
     <% } %>

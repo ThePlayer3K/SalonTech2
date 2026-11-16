@@ -2,7 +2,11 @@ const db = require('../config/db');
 
 async function relatorio({ dataInicio, dataFim }) {
   // Um único snapshot e cálculos NUMERIC no banco mantêm totais e listas consistentes.
-  // Projeta somente competências posteriores ao cursor, preservando cópias editadas/excluídas.
+  // entradas considera apenas agendamentos pagos, incluindo todos os horários do último dia.
+  // gastos_previstos projeta somente competências posteriores ao cursor da recorrência,
+  // preservando cópias editadas/excluídas. O vencimento se ajusta aos meses mais curtos.
+  // As previsões não são gravadas: gastos as reúne aos lançamentos cadastrados para
+  // que totais e detalhamento incluam os mesmos vencimentos no período selecionado.
   const result = await db.query(
     `WITH entradas AS (
        SELECT a.servico_id, COALESCE(s.nome, 'Serviço não informado') AS servico,
