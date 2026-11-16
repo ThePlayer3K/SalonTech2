@@ -10,9 +10,16 @@ function renderLogin(req, res, error = null, login = '') {
 }
 
 function getSafeReturnTo(value) {
-  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
-    ? value
-    : '/dashboard';
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) {
+    return '/dashboard';
+  }
+
+  // Navegadores tratam barras invertidas como barras e ignoram alguns controles na URL.
+  if (/[\\\u0000-\u001f\u007f]/.test(value)) {
+    return '/dashboard';
+  }
+
+  return value;
 }
 
 function getSessionUser(usuario) {
@@ -29,6 +36,32 @@ async function loginForm(req, res) {
   return renderLogin(req, res);
 }
 
+async function verificarCredenciais(usuario, senha) {
+  if (!usuario) {
+    return false;
+  }
+
+  const masterDoAmbiente = getAccountRole(usuario) === 'master';
+  const senhaDoAmbiente = senha === String(process.env.ADMIN_PASSWORD || '');
+  if (masterDoAmbiente && senhaDoAmbiente) {
+    return true;
+  }
+
+  return Usuario.verificarSenha(senha, usuario.senha);
+}
+
+function regenerarSessao(session) {
+  return new Promise((resolve, reject) => {
+    session.regenerate((error) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
 async function login(req, res, next) {
   const loginValue = String(req.body.login || '').trim();
   const senha = String(req.body.senha || '');
@@ -39,20 +72,21 @@ async function login(req, res, next) {
 
   try {
     const usuario = await Usuario.buscarPorLogin(loginValue);
-    const isEnvMaster = usuario && getAccountRole(usuario) === 'master' &&
-      senha === String(process.env.ADMIN_PASSWORD || '');
-    const senhaValida = usuario
-      ? isEnvMaster || await Usuario.verificarSenha(senha, usuario.senha)
-      : false;
+    const senhaValida = await verificarCredenciais(usuario, senha);
 
     if (!usuario || !senhaValida) {
       return renderLogin(req, res, 'Usuário ou senha inválidos', loginValue);
     }
 
     const returnTo = getSafeReturnTo(req.session.returnTo);
-    await new Promise((resolve, reject) => req.session.regenerate((error) => error ? reject(error) : resolve()));
+    await regenerarSessao(req.session);
     req.session.user = getSessionUser(usuario);
-    return req.session.save((error) => error ? next(error) : res.redirect(returnTo));
+    return req.session.save((error) => {
+      if (error) {
+        return next(error);
+      }
+      return res.redirect(returnTo);
+    });
   } catch (error) {
     return next(error);
   }
@@ -60,7 +94,9 @@ async function login(req, res, next) {
 
 function logout(req, res, next) {
   req.session.destroy((error) => {
-    if (error) return next(error);
+    if (error) {
+      return next(error);
+    }
     res.clearCookie('connect.sid');
     return res.redirect('/login');
   });

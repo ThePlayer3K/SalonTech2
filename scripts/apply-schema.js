@@ -3,13 +3,11 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { Client } = require('pg');
+const { getDatabaseConfig } = require('../config/database');
 const { applyMigrations } = require('./apply-migrations');
 
 async function main() {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
-  });
+  const client = new Client(getDatabaseConfig());
 
   await client.connect();
   try {

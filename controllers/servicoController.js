@@ -1,6 +1,6 @@
 const Servico = require('../models/Servico');
 const { isAdmin } = require('../middlewares/auth');
-const { requiredText, ValidationError } = require('./catalogoController');
+const { requiredText, ValidationError } = require('../utils/validation');
 
 function validId(value) {
   return /^[1-9]\d*$/.test(String(value))

@@ -1,5 +1,5 @@
 const Despesa = require('../models/Despesa');
-const { requiredText, ValidationError } = require('./catalogoController');
+const { requiredText, ValidationError } = require('../utils/validation');
 const { validId, parseDate, parseToken, formToken } = require('./formValidation');
 
 const camposPesquisa = ['nome', 'dataInicio', 'dataFim'];

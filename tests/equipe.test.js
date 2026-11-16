@@ -62,7 +62,7 @@ test('equipe: permissões, credenciais, salários e edição da própria conta',
     };
     next();
   });
-  app.use('/', require('../routes/placeholderRoutes'));
+  app.use('/', require('../routes/equipeRoutes'));
   app.use((error, req, res, next) => res.status(500).send('Erro interno'));
   const server = await new Promise((resolve) => {
     const instance = app.listen(0, '127.0.0.1', () => resolve(instance));

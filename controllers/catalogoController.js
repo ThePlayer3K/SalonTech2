@@ -1,12 +1,4 @@
-class ValidationError extends Error {}
-
-function requiredText(value, label, maxLength) {
-  const text = typeof value === 'string' ? value.trim() : '';
-  if (!text || text.length > maxLength) {
-    throw new ValidationError(`Informe ${label} com até ${maxLength} caracteres.`);
-  }
-  return text;
-}
+const { ValidationError, requiredText } = require('../utils/validation');
 
 function createCatalogoController({
   model,

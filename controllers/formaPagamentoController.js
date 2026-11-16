@@ -1,6 +1,7 @@
 const FormaPagamento = require('../models/FormaPagamento');
 const { isAdmin } = require('../middlewares/auth');
-const { createCatalogoController, requiredText } = require('./catalogoController');
+const { createCatalogoController } = require('./catalogoController');
+const { requiredText } = require('../utils/validation');
 
 module.exports = createCatalogoController({
   model: FormaPagamento,

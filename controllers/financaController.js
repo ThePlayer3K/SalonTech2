@@ -1,7 +1,7 @@
 const Financa = require('../models/Financa');
 const DespesasFixas = require('../services/despesasFixas');
 const { parseDate } = require('./formValidation');
-const { ValidationError } = require('./catalogoController');
+const { ValidationError } = require('../utils/validation');
 
 function periodoPadrao(agora = new Date()) {
   const formatadorData = new Intl.DateTimeFormat('en-US', {
