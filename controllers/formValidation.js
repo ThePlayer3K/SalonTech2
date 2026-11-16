@@ -1,8 +1,11 @@
 const { randomUUID } = require('node:crypto');
-const { ValidationError } = require('./catalogoController');
+const { ValidationError } = require('../utils/validation');
 
 function validId(value) {
-  return typeof value === 'string' && /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) <= 2147483647;
+  return typeof value === 'string'
+    && /^[1-9]\d*$/.test(value)
+    && Number.isSafeInteger(Number(value))
+    && Number(value) <= 2147483647;
 }
 
 function parseDate(value, label = 'uma data') {
@@ -21,7 +24,9 @@ function validToken(value) {
 }
 
 function parseToken(value) {
-  if (!validToken(value)) throw new ValidationError('Recarregue o formulário para iniciar um novo cadastro.');
+  if (!validToken(value)) {
+    throw new ValidationError('Recarregue o formulário para iniciar um novo cadastro.');
+  }
   return value;
 }
 

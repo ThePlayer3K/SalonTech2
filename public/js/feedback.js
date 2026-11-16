@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initFeedbackDialog() {
   const feedbackDialog = document.querySelector('#feedbackDialog');
   if (feedbackDialog) {
     feedbackDialog.querySelector('[data-feedback-close]').addEventListener('click', () => feedbackDialog.close());
@@ -7,7 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     feedbackDialog.showModal();
   }
+}
 
+function initFieldValidation() {
   const errors = new Map();
   let nextErrorId = 0;
   let focusScheduled = false;
@@ -17,9 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let error = errors.get(field);
     if (clear || field.validity.valid) {
       if (!error) return;
-      const descriptions = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter((id) => id && id !== error.id);
-      if (descriptions.length) field.setAttribute('aria-describedby', descriptions.join(' '));
-      else field.removeAttribute('aria-describedby');
+      const descriptions = (field.getAttribute('aria-describedby') || '')
+        .split(/\s+/)
+        .filter((id) => id && id !== error.id);
+      if (descriptions.length) {
+        field.setAttribute('aria-describedby', descriptions.join(' '));
+      } else {
+        field.removeAttribute('aria-describedby');
+      }
       field.removeAttribute('aria-invalid');
       error.remove();
       errors.delete(field);
@@ -27,7 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (!error) {
       error = document.createElement('p');
-      do { error.id = `field-error-${++nextErrorId}`; } while (document.getElementById(error.id));
+      do {
+        error.id = `field-error-${++nextErrorId}`;
+      } while (document.getElementById(error.id));
       error.className = 'field-error';
       error.setAttribute('aria-live', 'polite');
       field.insertAdjacentElement('afterend', error);
@@ -55,9 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }, true);
 
-  ['input', 'change'].forEach((name) => document.addEventListener(name, (event) => {
-    if (errors.has(event.target)) updateFieldError(event.target);
-  }));
+  for (const name of ['input', 'change']) {
+    document.addEventListener(name, (event) => {
+      if (errors.has(event.target)) updateFieldError(event.target);
+    });
+  }
   document.addEventListener('reset', (event) => {
     queueMicrotask(() => {
       if (event.defaultPrevented) return;
@@ -66,7 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+}
 
+function initConfirmations() {
   const dialog = document.querySelector('#confirmDialog');
   if (!dialog) return;
   const message = dialog.querySelector('#confirmMessage');
@@ -101,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dialog.close();
     }
   });
-  dialog.querySelector('[data-confirm-accept]').addEventListener('click', () => {
+  function confirmSubmission() {
     if (!pending) return;
     const { form, submitter } = pending;
     pending = null;
@@ -109,10 +122,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!form.isConnected) return;
     approvedForm = form;
     try {
-      if (submitter && submitter.form === form && !submitter.disabled) form.requestSubmit(submitter);
-      else form.requestSubmit();
+      if (submitter && submitter.form === form && !submitter.disabled) {
+        form.requestSubmit(submitter);
+      } else {
+        form.requestSubmit();
+      }
     } finally {
       approvedForm = null;
     }
-  });
+  }
+
+  dialog.querySelector('[data-confirm-accept]').addEventListener('click', confirmSubmission);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initFeedbackDialog();
+  initFieldValidation();
+  initConfirmations();
 });

@@ -1,5 +1,6 @@
 const Produto = require('../models/Produto');
-const { createCatalogoController, requiredText, ValidationError } = require('./catalogoController');
+const { createCatalogoController } = require('./catalogoController');
+const { requiredText, ValidationError } = require('../utils/validation');
 
 function parseForm(body) {
   const nome = requiredText(body.nome, 'o nome do produto', 120);

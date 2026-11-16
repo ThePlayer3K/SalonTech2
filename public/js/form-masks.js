@@ -65,78 +65,106 @@ function validateMaskedNumber(input) {
   input.setCustomValidity(message);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const masks = { cpf: formatCpf, phone: formatPhone, currency: formatCurrency, percentage: formatPercentage, integer: formatInteger };
-  document.querySelectorAll('[data-mask]').forEach((input) => {
-    const mask = masks[input.dataset.mask];
-    if (!mask || input.readOnly || input.disabled) return;
-    function applyMask(completeValue = false) {
-      const raw = input.value;
-      const caret = input.selectionStart;
-      const digitsToRight = caret === null ? 0 : raw.slice(caret).replace(/\D/g, '').length;
-      input.value = completeValue && input.dataset.mask === 'currency' ? (currencyFromValue(raw) ?? raw) : mask(raw);
+function restoreMaskedCaret(input, digitsToRight) {
+  let position = input.value.length;
+  let remaining = digitsToRight;
+  while (position > 0 && remaining > 0) {
+    position--;
+    if (/\d/.test(input.value[position])) remaining--;
+  }
+  input.setSelectionRange(position, position);
+}
+
+function deleteAdjacentMaskedDigit(input, event, applyMask) {
+  // Ao apagar ao lado de um separador, remove o dígito vizinho em vez de prender o cursor.
+  if (!['cpf', 'phone', 'currency'].includes(input.dataset.mask) || input.selectionStart !== input.selectionEnd) return;
+  const backward = event.inputType === 'deleteContentBackward';
+  if (!backward && event.inputType !== 'deleteContentForward') return;
+
+  let position = input.selectionStart + (backward ? -1 : 0);
+  if (position < 0 || position >= input.value.length || /\d/.test(input.value[position])) return;
+  while (position >= 0 && position < input.value.length && /\D/.test(input.value[position])) {
+    position += backward ? -1 : 1;
+  }
+  if (position < 0 || position >= input.value.length) return;
+
+  event.preventDefault();
+  input.value = input.value.slice(0, position) + input.value.slice(position + 1);
+  input.setSelectionRange(position, position);
+  applyMask();
+}
+
+function pasteMaskedValue(input, event, applyMask) {
+  const text = event.clipboardData?.getData('text');
+  if (text == null) return;
+
+  if (['cpf', 'phone'].includes(input.dataset.mask)) {
+    event.preventDefault();
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    input.value = input.value.slice(0, start) + text + input.value.slice(end);
+    input.setSelectionRange(start + text.length, start + text.length);
+    applyMask();
+    return;
+  }
+
+  if (input.dataset.mask === 'integer' && !/^\d+$/.test(text.trim())) {
+    event.preventDefault();
+    return;
+  }
+
+  const entireValueSelected = input.selectionStart === 0 && input.selectionEnd === input.value.length;
+  if (input.dataset.mask === 'currency' && entireValueSelected) {
+    event.preventDefault();
+    const value = currencyFromValue(text);
+    if (value !== null) {
+      input.value = value;
+      input.setSelectionRange(value.length, value.length);
       validateMaskedNumber(input);
-      if (document.activeElement === input && caret !== null) {
-        let position = input.value.length;
-        let remaining = digitsToRight;
-        while (position > 0 && remaining > 0) {
-          position--;
-          if (/\d/.test(input.value[position])) remaining--;
-        }
-        input.setSelectionRange(position, position);
-      }
     }
-    applyMask(true);
-    input.addEventListener('input', (event) => {
-      if (!event.isComposing) applyMask();
-    });
-    input.addEventListener('compositionend', () => applyMask());
-    input.addEventListener('change', () => applyMask(true));
-    input.addEventListener('blur', () => {
-      if (input.dataset.mask === 'percentage') input.value = input.value.replace(/,$/, '');
-      applyMask(true);
-    });
-    input.addEventListener('beforeinput', (event) => {
-      if (input.dataset.mask === 'integer' && event.data && /\D/.test(event.data)) event.preventDefault();
-      // Ao apagar ao lado de um separador, remove o dígito vizinho em vez de prender o cursor.
-      if (!['cpf', 'phone', 'currency'].includes(input.dataset.mask) || input.selectionStart !== input.selectionEnd) return;
-      const backward = event.inputType === 'deleteContentBackward';
-      if (!backward && event.inputType !== 'deleteContentForward') return;
-      let position = input.selectionStart + (backward ? -1 : 0);
-      if (position < 0 || position >= input.value.length || /\d/.test(input.value[position])) return;
-      while (position >= 0 && position < input.value.length && /\D/.test(input.value[position])) position += backward ? -1 : 1;
-      if (position < 0 || position >= input.value.length) return;
-      event.preventDefault();
-      input.value = input.value.slice(0, position) + input.value.slice(position + 1);
-      input.setSelectionRange(position, position);
-      applyMask();
-    });
-    input.addEventListener('paste', (event) => {
-      const text = event.clipboardData?.getData('text');
-      if (text == null) return;
-      if (['cpf', 'phone'].includes(input.dataset.mask)) {
-        event.preventDefault();
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        input.value = input.value.slice(0, start) + text + input.value.slice(end);
-        input.setSelectionRange(start + text.length, start + text.length);
-        applyMask();
-        return;
-      }
-      if (input.dataset.mask === 'integer' && !/^\d+$/.test(text.trim())) {
-        event.preventDefault();
-        return;
-      }
-      if (input.dataset.mask === 'currency' && input.selectionStart === 0 && input.selectionEnd === input.value.length) {
-        event.preventDefault();
-        const value = currencyFromValue(text);
-        if (value !== null) {
-          input.value = value;
-          input.setSelectionRange(value.length, value.length);
-          validateMaskedNumber(input);
-        }
-      }
-    });
-    input.form?.addEventListener('reset', () => setTimeout(() => applyMask(true), 0));
+  }
+}
+
+function initMaskedInput(input, masks) {
+  const mask = masks[input.dataset.mask];
+  if (!mask || input.readOnly || input.disabled) return;
+  function applyMask(completeValue = false) {
+    const raw = input.value;
+    const caret = input.selectionStart;
+    const digitsToRight = caret === null ? 0 : raw.slice(caret).replace(/\D/g, '').length;
+    input.value = completeValue && input.dataset.mask === 'currency' ? (currencyFromValue(raw) ?? raw) : mask(raw);
+    validateMaskedNumber(input);
+    if (document.activeElement === input && caret !== null) {
+      restoreMaskedCaret(input, digitsToRight);
+    }
+  }
+  applyMask(true);
+  input.addEventListener('input', (event) => {
+    if (!event.isComposing) applyMask();
   });
+  input.addEventListener('compositionend', () => applyMask());
+  input.addEventListener('change', () => applyMask(true));
+  input.addEventListener('blur', () => {
+    if (input.dataset.mask === 'percentage') input.value = input.value.replace(/,$/, '');
+    applyMask(true);
+  });
+  input.addEventListener('beforeinput', (event) => {
+    if (input.dataset.mask === 'integer' && event.data && /\D/.test(event.data)) event.preventDefault();
+    deleteAdjacentMaskedDigit(input, event, applyMask);
+  });
+  input.addEventListener('paste', (event) => {
+    pasteMaskedValue(input, event, applyMask);
+  });
+  input.form?.addEventListener('reset', () => setTimeout(() => applyMask(true), 0));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const masks = {
+    cpf: formatCpf,
+    phone: formatPhone,
+    currency: formatCurrency,
+    percentage: formatPercentage,
+    integer: formatInteger
+  };
+  document.querySelectorAll('[data-mask]').forEach((input) => initMaskedInput(input, masks));
 });

@@ -3,7 +3,11 @@ const Usuario = require('../models/Usuario');
 function getAccountRole(account) {
   const masterName = String(process.env.ADMIN_NAME || '').trim().toLocaleLowerCase('pt-BR');
   const accountName = String(account?.nome || '').trim().toLocaleLowerCase('pt-BR');
-  if (masterName && accountName === masterName) return 'master';
+  // A identidade master vem do ambiente; um papel master armazenado sozinho não basta.
+  if (masterName && accountName === masterName) {
+    return 'master';
+  }
+
   const storedRole = account?.papel || (account?.tipo === 'A' ? 'admin' : 'profissional');
   return storedRole === 'master' ? 'admin' : storedRole;
 }
@@ -22,6 +26,8 @@ function requireAuth(req, res, next) {
           res.redirect('/login');
         });
       }
+
+      // Reconsulta o perfil para aplicar alterações de acesso sem exigir novo login.
       req.session.user = {
         ...req.session.user,
         id: usuario.id,
@@ -36,7 +42,9 @@ function requireAuth(req, res, next) {
 }
 
 function requireGuest(req, res, next) {
-  if (req.session.user) return res.redirect('/dashboard');
+  if (req.session.user) {
+    return res.redirect('/dashboard');
+  }
   return next();
 }
 
@@ -61,4 +69,12 @@ function isProfissional(user) {
   return user?.papel === 'profissional';
 }
 
-module.exports = { requireAuth, requireGuest, requireRole, isAdmin, isMaster, isProfissional, getAccountRole };
+module.exports = {
+  requireAuth,
+  requireGuest,
+  requireRole,
+  isAdmin,
+  isMaster,
+  isProfissional,
+  getAccountRole
+};

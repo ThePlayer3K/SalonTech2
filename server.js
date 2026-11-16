@@ -14,7 +14,7 @@ const despesaRoutes = require('./routes/despesaRoutes');
 const financaRoutes = require('./routes/financaRoutes');
 const { iniciarRotina } = require('./services/despesasFixas');
 const agendamentoRoutes = require('./routes/agendamentoRoutes');
-const placeholderRoutes = require('./routes/placeholderRoutes');
+const equipeRoutes = require('./routes/equipeRoutes');
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -28,11 +28,13 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session);
 
-app.use((req, res, next) => {
+function setPageContext(req, res, next) {
   res.locals.user = req.session.user || null;
   res.locals.currentPath = req.path;
   next();
-});
+}
+
+app.use(setPageContext);
 
 app.get('/', (req, res) => {
   res.redirect(req.session.user ? '/dashboard' : '/login');
@@ -47,19 +49,22 @@ app.use('/servicos', servicoRoutes);
 app.use('/despesas', despesaRoutes);
 app.use('/financas', financaRoutes);
 app.use('/agendamentos', agendamentoRoutes);
-app.use('/', placeholderRoutes);
+app.use('/', equipeRoutes);
 
-app.use((req, res) => {
+function notFound(req, res) {
   res.status(404).render('pages/404', { title: 'Página não encontrada' });
-});
+}
 
-app.use((error, req, res, next) => {
+function handleError(error, req, res, next) {
   console.error('Erro inesperado:', error);
   res.status(500).render('pages/500', {
     title: 'Erro interno',
     error: process.env.NODE_ENV === 'development' ? error : null
   });
-});
+}
+
+app.use(notFound);
+app.use(handleError);
 
 if (require.main === module) {
   iniciarRotina();

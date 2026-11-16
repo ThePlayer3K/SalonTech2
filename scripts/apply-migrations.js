@@ -3,19 +3,18 @@ require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client } = require('pg');
+const { getDatabaseConfig } = require('../config/database');
 
 async function applyMigrations(client) {
   const directory = path.join(__dirname, '..', 'migrations');
-  for (const filename of fs.readdirSync(directory).filter((name) => name.endsWith('.sql')).sort()) {
+  const filenames = fs.readdirSync(directory).filter((name) => name.endsWith('.sql')).sort();
+  for (const filename of filenames) {
     await client.query(fs.readFileSync(path.join(directory, filename), 'utf8'));
   }
 }
 
 async function main() {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
-  });
+  const client = new Client(getDatabaseConfig());
   await client.connect();
   try {
     await client.query('BEGIN');
@@ -25,7 +24,9 @@ async function main() {
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
-  } finally { await client.end(); }
+  } finally {
+    await client.end();
+  }
 }
 
 if (require.main === module) {

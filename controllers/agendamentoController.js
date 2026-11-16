@@ -2,7 +2,7 @@ const Agendamento = require('../models/Agendamento');
 const Servico = require('../models/Servico');
 const FormaPagamento = require('../models/FormaPagamento');
 const { isAdmin } = require('../middlewares/auth');
-const { ValidationError } = require('./catalogoController');
+const { ValidationError } = require('../utils/validation');
 const { validId, parseDate, parseToken, formToken } = require('./formValidation');
 
 const situacoes = {
